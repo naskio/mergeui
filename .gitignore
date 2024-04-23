@@ -330,3 +330,8 @@ tmp/
 tmp.*
 *.tmp.*
 ##### tmps #####
+
+
+##### Others #####
+flagged/
+##### Others #####
