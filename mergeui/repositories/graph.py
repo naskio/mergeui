@@ -1,17 +1,16 @@
 from core.base import BaseRepository
 import gqlalchemy as gq
 import typing as t
-import json
-from core.schema import Model, MergedModel, DerivedFrom, Graph, SortByOptionType, ExcludeOptionType
-from gqlalchemy.query_builders.memgraph_query_builder import Order
+from core.schema import Model, Graph, SortByOptionType, ExcludeOptionType
+from core.db import DatabaseConnection
+from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
-from gqlalchemy.vendors.database_client import DatabaseClient
 from gqlalchemy.query_builders.memgraph_query_builder import Order
 
 
 class GraphRepository(BaseRepository):
-    def __init__(self, db: DatabaseClient):
-        self.db = db
+    def __init__(self, db_conn: DatabaseConnection):
+        self.db_conn = db_conn
 
     def list_property_values(self, key: str = "id", label: str = "") -> list[str]:
         """Get all possible values for a property"""
@@ -97,3 +96,46 @@ class GraphRepository(BaseRepository):
                 q = q.order_by(properties=[("n.updated_at", Order.DESC)])
         result = list(map(lambda x: x.get("n"), q.execute()))
         return t.cast(list[Model], result)
+
+    def _get_results(self, results) -> tuple[list[gq.Node], list[gq.Relationship]]:
+        if not results:
+            return [], []
+        assert len(results) == 1, "Multiple results returned from query"
+        nodes = list(map(_convert_memgraph_value, results[0]["nodes"]))
+        relationships = list(map(_convert_memgraph_value, results[0]["relationships"]))
+        return nodes, relationships
+
+    def get_sub_graph(self, id_: str, label: str = "Model", max_depth: t.Optional[int] = None) -> Graph:
+        """Get a sub-graph from a starting node"""
+        if not id_:
+            return Graph()
+        q = (gq.match()
+             .node(label, variable="n", id=id_))
+        if max_depth is not None:
+            q = q.to(variable=f"r*..{max_depth}", directed=False)
+        else:
+            q = q.to(variable="r*", directed=False)
+        q = (
+            q.node(label, variable="m")
+            .with_("COLLECT(n)+COLLECT(m) AS all_nodes")
+            .unwind("all_nodes", variable="node")
+            .with_("COLLECT(DISTINCT node) AS distinct_nodes")
+            .match()
+            .node(label, variable="a")
+            .to(variable="rel")
+            .node(label, variable="b")
+            .add_custom_cypher("WHERE a IN distinct_nodes AND b IN distinct_nodes")
+            .with_("COLLECT(DISTINCT rel) AS distinct_rels, distinct_nodes")
+            .return_("distinct_nodes AS nodes, distinct_rels as relationships")
+        )
+        results = list(q.execute())
+        nodes, relationships = self._get_results(results)
+        if not nodes:
+            q = (
+                gq.match()
+                .node(label, variable="n", id=id_)
+                .return_("COLLECT(DISTINCT n) AS nodes, [] AS relationships")
+            )
+            results = list(q.execute())
+            nodes, relationships = self._get_results(results)
+        return Graph(nodes=nodes, relationships=relationships)
