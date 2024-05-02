@@ -29,12 +29,18 @@ class TestGraphRepository:
         result = self.repository.list_nodes()
         assert len(result) == 6
         assert isinstance(result[0], gq.Node)
+        # limit
+        result = self.repository.list_nodes(limit=2)
+        assert len(result) == 2
 
     def test_list_models(self):
         # get all
         result = self.repository.list_models()
         assert len(result) == 6
         assert isinstance(result[0], gq.Node)
+        # limit
+        result = self.repository.list_models(limit=2)
+        assert len(result) == 2
         # get by license only
         result = self.repository.list_models(license_='cc-by-nc-4.0')
         assert len(result) == 1
