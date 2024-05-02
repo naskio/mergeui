@@ -1,0 +1,150 @@
+{
+  "directed": true,
+  "multigraph": true,
+  "nodes_count": 6,
+  "relationships_count": 7,
+  "nodes": [
+    {
+      "id": "Q-bert/MetaMath-Cybertron-Starling",
+      "url": "https://huggingface.co/Q-bert/MetaMath-Cybertron-Starling",
+      "name": "Q-bert/MetaMath-Cybertron-Starling",
+      "description": "Merge Q-bert/MetaMath-Cybertron and berkeley-nest/Starling-LM-7B-alpha using slerp merge.",
+      "license": "cc-by-nc-4.0",
+      "author": "Q-bert",
+      "merge_method": "slerp",
+      "architecture": "MistralForCausalLM",
+      "likes": 40,
+      "downloads": 4402,
+      "updated_at": "2024-01-25T11:43:57.000Z",
+      "created_at": "2023-12-05T19:48:48.000Z",
+      "labels": [
+        "Model",
+        "MergedModel"
+      ]
+    },
+    {
+      "id": "Q-bert/MetaMath-Cybertron",
+      "url": "https://huggingface.co/Q-bert/MetaMath-Cybertron",
+      "license": "apache-2.0",
+      "author": "Q-bert",
+      "merge_method": "slerp",
+      "architecture": "MistralForCausalLM",
+      "likes": 6,
+      "downloads": 2408,
+      "updated_at": "2024-01-25T11:44:11.000Z",
+      "created_at": "2023-12-05T19:18:19.000Z",
+      "labels": [
+        "Model",
+        "MergedModel"
+      ]
+    },
+    {
+      "id": "berkeley-nest/Starling-LM-7B-alpha",
+      "url": "https://huggingface.co/berkeley-nest/Starling-LM-7B-alpha",
+      "license": "apache-2.0",
+      "author": "berkeley-nest",
+      "architecture": "MistralForCausalLM",
+      "likes": 542,
+      "downloads": 183250,
+      "updated_at": "2024-03-20T04:19:58.000Z",
+      "created_at": "2023-11-25T17:42:15.000Z",
+      "labels": [
+        "Model"
+      ]
+    },
+    {
+      "id": "fblgit/una-cybertron-7b-v2-bf16",
+      "url": "https://huggingface.co/fblgit/una-cybertron-7b-v2-bf16",
+      "name": "una-cybertron-7b-v2-bf16",
+      "license": "apache-2.0",
+      "author": "fblgit",
+      "architecture": "MistralForCausalLM",
+      "likes": 117,
+      "downloads": 3082,
+      "updated_at": "2024-03-08T10:26:27.000Z",
+      "created_at": "2023-12-02T00:07:53.000Z",
+      "labels": [
+        "Model"
+      ]
+    },
+    {
+      "id": "meta-math/MetaMath-Mistral-7B",
+      "url": "https://huggingface.co/meta-math/MetaMath-Mistral-7B",
+      "license": "apache-2.0",
+      "author": "meta-math",
+      "architecture": "MistralForCausalLM",
+      "likes": 87,
+      "downloads": 10317,
+      "updated_at": "2023-12-21T01:39:02.000Z",
+      "created_at": "2023-10-22T11:12:15.000Z",
+      "labels": [
+        "Model"
+      ]
+    },
+    {
+      "id": "mistralai/Mistral-7B-v0.1",
+      "url": "https://huggingface.co/mistralai/Mistral-7B-v0.1",
+      "license": "apache-2.0",
+      "author": "mistralai",
+      "architecture": "MistralForCausalLM",
+      "likes": 3148,
+      "downloads": 1864537,
+      "updated_at": "2023-12-11T19:27:24.000Z",
+      "created_at": "2023-09-20T13:03:50.000Z",
+      "labels": [
+        "Model"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "DERIVED_FROM",
+      "method": "tags",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron-Starling",
+      "source": "Q-bert/MetaMath-Cybertron-Starling",
+      "target": "Q-bert/MetaMath-Cybertron"
+    },
+    {
+      "type": "DERIVED_FROM",
+      "method": "cardData.base_model",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron-Starling",
+      "source": "Q-bert/MetaMath-Cybertron-Starling",
+      "target": "Q-bert/MetaMath-Cybertron"
+    },
+    {
+      "type": "DERIVED_FROM",
+      "method": "tags",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron-Starling",
+      "source": "Q-bert/MetaMath-Cybertron-Starling",
+      "target": "berkeley-nest/Starling-LM-7B-alpha"
+    },
+    {
+      "type": "DERIVED_FROM",
+      "method": "cardData.base_model",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron-Starling",
+      "source": "Q-bert/MetaMath-Cybertron-Starling",
+      "target": "berkeley-nest/Starling-LM-7B-alpha"
+    },
+    {
+      "type": "DERIVED_FROM",
+      "method": "tags",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron",
+      "source": "Q-bert/MetaMath-Cybertron",
+      "target": "fblgit/una-cybertron-7b-v2-bf16"
+    },
+    {
+      "type": "DERIVED_FROM",
+      "method": "cardData.base_model",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron",
+      "source": "Q-bert/MetaMath-Cybertron",
+      "target": "fblgit/una-cybertron-7b-v2-bf16"
+    },
+    {
+      "type": "DERIVED_FROM",
+      "method": "cardData.base_model",
+      "origin": "https://huggingface.co/api/models/Q-bert/MetaMath-Cybertron",
+      "source": "Q-bert/MetaMath-Cybertron",
+      "target": "meta-math/MetaMath-Mistral-7B"
+    }
+  ]
+}
