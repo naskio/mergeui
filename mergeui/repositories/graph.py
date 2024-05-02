@@ -9,8 +9,8 @@ class GraphRepository(BaseRepository):
         self.db = db
 
     def get_distinct_property_values(self, key: str = "id", label: str = "") -> list[str]:
-        query = (gq.match()
-                 .node(labels=f"{label}", variable="n")
-                 .return_(f"DISTINCT n.{key} as v")
-                 .order_by(properties=[("v", Order.ASC)]))
-        return list(map(lambda x: x.get("v"), query.execute()))
+        q = (gq.match()
+             .node(labels=f"{label}", variable="n")
+             .return_(f"DISTINCT n.{key} as v")
+             .order_by(properties=[("v", Order.ASC)]))
+        return list(map(lambda x: x.get("v"), q.execute()))
