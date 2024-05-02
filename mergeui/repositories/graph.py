@@ -23,6 +23,7 @@ class GraphRepository(BaseRepository):
     def list_nodes(
             self,
             label: str = "",
+            limit: t.Optional[int] = None,
     ) -> list[gq.Node]:
         """Get all nodes with a specific label"""
         q = (
@@ -30,6 +31,8 @@ class GraphRepository(BaseRepository):
             .node(labels=label, variable="n")
             .return_("DISTINCT n")
         )
+        if limit is not None:
+            q = q.limit(limit)
         result = list(map(lambda x: x.get("n"), q.execute()))
         return t.cast(list[gq.Node], result)
 
@@ -44,7 +47,8 @@ class GraphRepository(BaseRepository):
             license_: t.Optional[str] = None,
             merge_method: t.Optional[str] = None,
             architecture: t.Optional[str] = None,
-            base_model: t.Optional[str] = None
+            base_model: t.Optional[str] = None,
+            limit: t.Optional[int] = None,
     ) -> list[Model]:
         """Get all models with optional filters"""
         q = gq.match()
@@ -94,6 +98,8 @@ class GraphRepository(BaseRepository):
                 q = q.order_by(properties=[("n.created_at", Order.DESC)])
             elif sort_by == "recently updated":
                 q = q.order_by(properties=[("n.updated_at", Order.DESC)])
+        if limit is not None:
+            q = q.limit(limit)
         result = list(map(lambda x: x.get("n"), q.execute()))
         return t.cast(list[Model], result)
 
