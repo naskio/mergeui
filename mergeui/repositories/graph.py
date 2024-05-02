@@ -27,7 +27,7 @@ class GraphRepository(BaseRepository):
         q = (
             gq.match()
             .node(labels=label, variable="n")
-            .return_()
+            .return_("DISTINCT n")
         )
-        result = list(q.execute())
+        result = list(map(lambda x: x.get("n"), q.execute()))
         return t.cast(list[gq.Node], result)
