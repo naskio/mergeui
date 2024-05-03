@@ -5,6 +5,7 @@ from pathlib import Path
 from core.settings import Settings
 from core.base import BaseDatabaseConnection
 from utils import parse_datetime
+from utils.db import create_db_connection
 from utils.graph import load_json_nx_graph, import_from_nx_graph
 
 
@@ -15,7 +16,7 @@ class DatabaseConnection(BaseDatabaseConnection):
     def __init__(self, settings: Settings):
         logger.debug(f"Creating database connection for {settings.app_name}...")
         self.settings = settings
-        self.db = gq.Memgraph()
+        self.db = create_db_connection(self.settings)
 
     def reset(self):
         logger.info("Resetting database...")

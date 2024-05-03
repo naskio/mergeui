@@ -1,36 +1,11 @@
-import pydantic as pd
-import dataclasses as dc
 import typing as t
+import dataclasses as dc
 import datetime as dt
 import gqlalchemy as gq
 from core.settings import Settings
-from core.db import DatabaseConnection
-import re
+from utils.db import create_db_connection
 
-DataT = t.TypeVar('DataT')
-
-db_conn = DatabaseConnection(Settings())
-
-
-class GenericRO(pd.BaseModel, t.Generic[DataT]):
-    success: bool = True
-    message: t.Optional[str] = None
-    data: t.Optional[DataT] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
-MODEL_ID_REGEX = re.compile(r'^[-\w]+/[-\w]+$')
-
-ColumnType = t.Literal[
-    "id", "url", "name", "description", "license", "author", "merge_method", "architecture",
-    "likes", "downloads", "created_at", "updated_at"]
-ExcludeOptionType = t.Literal["base", "merged"]
-SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated"]
-MergeMethodType = t.Literal[
-    "linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
-    "breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
+db = create_db_connection(Settings())
 
 
 @dc.dataclass
@@ -41,7 +16,7 @@ class Graph:
 
 class Model(gq.Node):
     # Supported types: bool, int, float, str, list, dict, dt.datetime
-    id: str = gq.Field(index=True, exists=True, unique=True, db=db_conn.db)
+    id: str = gq.Field(index=True, exists=True, unique=True, db=db)
     url: t.Optional[str]  # pd.AnyHttpUrl can't be used
     name: t.Optional[str]
     description: t.Optional[str]

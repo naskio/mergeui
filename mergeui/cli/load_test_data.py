@@ -1,5 +1,6 @@
-from core.db import DatabaseConnection, Settings
 from loguru import logger
+from core.settings import Settings
+from core.db import DatabaseConnection
 
 
 def main():
