@@ -1,7 +1,8 @@
-import pydantic as pd
+import typing as t
 from loguru import logger
-from pathlib import Path
+import pydantic as pd
 import pydantic_settings as pds
+from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 logger.debug(f'PROJECT_DIR: {PROJECT_DIR}')
@@ -19,5 +20,9 @@ class Settings(pds.BaseSettings):
     favicon_path: Path = PROJECT_DIR / 'static/brand/favicon.ico'
     max_graph_depth: int = 5
     disable_gradio_app: bool = False
+    results_limit: t.Optional[int] = None
+    # db connection
+    db_host: str = "memgraph"
+    db_port: int = 7687
     # db settings
     text_index_name: str = "modelDocuments"
