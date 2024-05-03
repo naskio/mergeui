@@ -23,7 +23,9 @@ class TestGraphRepository:
         cls.db_conn.reset()
 
     def test_list_property_values(self):
-        assert 'apache-2.0' in self.repository.list_property_values('license')
+        license_choices = self.repository.list_property_values('license')
+        assert 'apache-2.0' in license_choices
+        assert license_choices == sorted(license_choices)
 
     def test_list_nodes(self):
         result = self.repository.list_nodes()
