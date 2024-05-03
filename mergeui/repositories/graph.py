@@ -1,8 +1,8 @@
 from core.base import BaseRepository
 import gqlalchemy as gq
 import typing as t
-from core.schema import Model, Graph, SortByOptionType, ExcludeOptionType
 from core.db import DatabaseConnection
+from core.schema import Model, Graph, SortByOptionType, ExcludeOptionType
 from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
