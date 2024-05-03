@@ -14,7 +14,6 @@ class DatabaseConnection(BaseDatabaseConnection):
     db: gq.Memgraph
 
     def __init__(self, settings: Settings):
-        logger.debug(f"Creating database connection for {settings.app_name}...")
         self.settings = settings
         self.db = create_db_connection(self.settings)
 
