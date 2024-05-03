@@ -22,7 +22,7 @@ class Settings(pds.BaseSettings):
     disable_gradio_app: bool = False
     results_limit: t.Optional[int] = None
     # db connection
-    db_host: str = "memgraph"
-    db_port: int = 7687
+    db_host: str = "localhost"
+    db_port: int = 7687  # use 7688 for test db
     # db settings
     text_index_name: str = "modelDocuments"
