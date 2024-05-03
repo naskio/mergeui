@@ -1,11 +1,11 @@
-from core.base import BaseRepository
-import gqlalchemy as gq
 import typing as t
-from core.db import DatabaseConnection
-from core.schema import Model, Graph, SortByOptionType, ExcludeOptionType
+import gqlalchemy as gq
 from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
+from core.base import BaseRepository
+from core.db import DatabaseConnection
+from core.schema import Model, Graph
 
 
 class GraphRepository(BaseRepository):
@@ -15,7 +15,7 @@ class GraphRepository(BaseRepository):
     def list_property_values(self, key: str = "id", label: str = "") -> list[str]:
         """Get all possible values for a property"""
         q = (gq.match()
-             .node(labels=f"{label}", variable="n")
+             .node(labels=label, variable="n")
              .return_(f"DISTINCT n.{key} as v")
              .order_by(properties=[("v", Order.ASC)]))
         return list(map(lambda x: x.get("v"), q.execute()))
@@ -36,14 +36,16 @@ class GraphRepository(BaseRepository):
         result = list(map(lambda x: x.get("n"), q.execute()))
         return t.cast(list[gq.Node], result)
 
-    def _get_where(self, q, first_where: bool):
-        return getattr(q, "where" if first_where else "and_where")
+    def _get_where_clause(self, q, where_initiated: bool):
+        return getattr(q, "where" if not where_initiated else "and_where")
 
     def list_models(
             self,
             query: t.Optional[str] = None,
-            sort_by: t.Optional[SortByOptionType] = None,
-            exclude: t.Optional[ExcludeOptionType] = None,
+            label: str = "Model",
+            not_label: t.Optional[str] = None,
+            sort_key: t.Optional[str] = None,
+            sort_order: t.Optional[Order] = None,
             license_: t.Optional[str] = None,
             merge_method: t.Optional[str] = None,
             architecture: t.Optional[str] = None,
@@ -52,30 +54,29 @@ class GraphRepository(BaseRepository):
     ) -> list[Model]:
         """Get all models with optional filters"""
         q = gq.match()
-        f_where = True
-        # exclude and base_model
-        if exclude == "base":
-            q = q.node("MergedModel", variable="n")
-        else:
-            q = q.node("Model", variable="n")
+        where_initiated = False
+        # label
+        q = q.node(label, variable="n")
+        # base_model
         if base_model is not None:
             q = (q.to("DERIVED_FROM", variable="r")
                  .node("Model", variable="m", id=base_model))
-        if exclude == "merged":
-            q = q.where_not("n", Operator.LABEL_FILTER, expression="MergedModel")
-            f_where = False
+        # not_label
+        if not_label is not None:
+            q = q.where_not("n", Operator.LABEL_FILTER, expression=not_label)
+            where_initiated = True
         # license
         if license_ is not None:
-            q = self._get_where(q, f_where)("n.license", Operator.EQUAL, literal=license_)
-            f_where = False
+            q = self._get_where_clause(q, where_initiated)("n.license", Operator.EQUAL, literal=license_)
+            where_initiated = True
         # merge_method
         if merge_method is not None:
-            q = self._get_where(q, f_where)("n.merge_method", Operator.EQUAL, literal=merge_method)
-            f_where = False
+            q = self._get_where_clause(q, where_initiated)("n.merge_method", Operator.EQUAL, literal=merge_method)
+            where_initiated = True
         # architecture
         if architecture is not None:
-            q = self._get_where(q, f_where)("n.architecture", Operator.EQUAL, literal=architecture)
-            f_where = False
+            q = self._get_where_clause(q, where_initiated)("n.architecture", Operator.EQUAL, literal=architecture)
+            where_initiated = True
         # search query
         if query is not None:
             q = (
@@ -87,29 +88,20 @@ class GraphRepository(BaseRepository):
                 .where("n", Operator.EQUAL, expression="node")
             )
         q = q.return_(f"DISTINCT n")
-        if sort_by is not None:
-            if sort_by == "default":
-                q = q.order_by(properties=[("n.created_at", Order.ASC)])
-            elif sort_by == "most likes":
-                q = q.order_by(properties=[("n.likes", Order.DESC)])
-            elif sort_by == "most downloads":
-                q = q.order_by(properties=[("n.downloads", Order.DESC)])
-            elif sort_by == "recently created":
-                q = q.order_by(properties=[("n.created_at", Order.DESC)])
-            elif sort_by == "recently updated":
-                q = q.order_by(properties=[("n.updated_at", Order.DESC)])
+        if sort_key is not None:
+            q = q.order_by(properties=[(f"n.{sort_key}", sort_order or Order.ASC)])
         if limit is not None:
             q = q.limit(limit)
         result = list(map(lambda x: x.get("n"), q.execute()))
         return t.cast(list[Model], result)
 
-    def _get_results(self, results) -> tuple[list[gq.Node], list[gq.Relationship]]:
+    def _results_as_graph(self, results) -> Graph:
         if not results:
-            return [], []
+            return Graph()
         assert len(results) == 1, "Multiple results returned from query"
         nodes = list(map(_convert_memgraph_value, results[0]["nodes"]))
         relationships = list(map(_convert_memgraph_value, results[0]["relationships"]))
-        return nodes, relationships
+        return Graph(nodes=nodes, relationships=relationships)
 
     def get_sub_graph(self, id_: str, label: str = "Model", max_depth: t.Optional[int] = None) -> Graph:
         """Get a sub-graph from a starting node"""
@@ -135,13 +127,13 @@ class GraphRepository(BaseRepository):
             .return_("distinct_nodes AS nodes, distinct_rels as relationships")
         )
         results = list(q.execute())
-        nodes, relationships = self._get_results(results)
-        if not nodes:
+        gr = self._results_as_graph(results)
+        if not gr.nodes:  # handle isolated node case
             q = (
                 gq.match()
                 .node(label, variable="n", id=id_)
                 .return_("COLLECT(DISTINCT n) AS nodes, [] AS relationships")
             )
             results = list(q.execute())
-            nodes, relationships = self._get_results(results)
-        return Graph(nodes=nodes, relationships=relationships)
+            gr = self._results_as_graph(results)
+        return gr

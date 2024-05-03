@@ -55,16 +55,16 @@ class TestGraphRepository:
         # exclude
         result = self.repository.list_models(license_='apache-2.0')
         assert len(result) == 5
-        result = self.repository.list_models(license_='apache-2.0', exclude='base')
+        result = self.repository.list_models(license_='apache-2.0', label="MergedModel")
         assert len(result) == 1
-        result = self.repository.list_models(license_='apache-2.0', exclude='merged')
+        result = self.repository.list_models(license_='apache-2.0', not_label="MergedModel")
         assert len(result) == 4
         # base_model
-        result = self.repository.list_models(license_='apache-2.0', exclude='base',
+        result = self.repository.list_models(license_='apache-2.0', label="MergedModel",
                                              base_model="fblgit/una-cybertron-7b-v2-bf16")
         assert len(result) == 1
         result = self.repository.list_models(
-            license_='apache-2.0', exclude='base',
+            license_='apache-2.0', label="MergedModel",
             base_model="mistralai/Mistral-7B-v0.1")
         assert len(result) == 0
         # get by search query only
