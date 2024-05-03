@@ -6,15 +6,16 @@ import gqlalchemy as gq
 from core.schema import Model
 from utils.types import create_partial_type, create_literal_type
 
+BaseValidationError = t.Union[pd.ValidationError, ValueError, AssertionError]
 PartialModel = create_partial_type("PartialModel", Model)
-PartialNode = create_partial_type("PartialNode", gq.Node)
-PartialRelationship = create_partial_type("PartialRelationship", gq.Relationship)
+DataNode = create_partial_type("DataNode", gq.Node)
+DataRelationship = create_partial_type("DataRelationship", gq.Relationship)
 ColumnType = create_literal_type(Model)
 
 
-class Graph(TypedDict):
-    nodes: list[PartialNode]
-    relationships: list[PartialRelationship]
+class DataGraph(TypedDict):
+    nodes: list[DataNode]
+    relationships: list[DataRelationship]
 
 
 MODEL_ID_REGEX = re.compile(r'^[-.\w]+/[-.\w]+$')
