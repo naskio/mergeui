@@ -12,7 +12,7 @@ def get_settings():
 
 
 @lru_cache
-async def get_db_connection(settings=fa.Depends(get_settings)):
+def get_db_connection(settings=fa.Depends(get_settings)):
     return DatabaseConnection(settings)
 
 
