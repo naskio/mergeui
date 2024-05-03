@@ -103,7 +103,7 @@ class GraphRepository(BaseRepository):
         relationships = list(map(_convert_memgraph_value, results[0]["relationships"]))
         return Graph(nodes=nodes, relationships=relationships)
 
-    def get_sub_graph(self, id_: str, label: str = "Model", max_depth: t.Optional[int] = None) -> Graph:
+    def get_sub_graph(self, id_: str, label: str = "", max_depth: t.Optional[int] = None) -> Graph:
         """Get a sub-graph from a starting node"""
         if not id_:
             return Graph()
