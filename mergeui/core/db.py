@@ -4,9 +4,9 @@ import networkx as nx
 from pathlib import Path
 from core.settings import Settings
 from core.base import BaseDatabaseConnection
-from utils import parse_datetime
+from utils import parse_iso_datetime_str
 from utils.db import create_db_connection
-from utils.graph import load_json_nx_graph, import_from_nx_graph
+from utils.graph import load_nx_graph_from_json_file, import_nx_graph_to_db
 
 
 class DatabaseConnection(BaseDatabaseConnection):
@@ -42,11 +42,11 @@ class DatabaseConnection(BaseDatabaseConnection):
         logger.success("Database setup completed.")
 
     def populate_from_json(self, json_path: Path):
-        graph = load_json_nx_graph(json_path)
+        graph = load_nx_graph_from_json_file(json_path)
         for node in graph.nodes:  # fix graph updated_at and created_at property types
-            graph.nodes[node]["created_at"] = parse_datetime(graph.nodes[node]["created_at"])
-            graph.nodes[node]["updated_at"] = parse_datetime(graph.nodes[node]["updated_at"])
-        import_from_nx_graph(graph, self.db)
+            graph.nodes[node]["created_at"] = parse_iso_datetime_str(graph.nodes[node]["created_at"])
+            graph.nodes[node]["updated_at"] = parse_iso_datetime_str(graph.nodes[node]["updated_at"])
+        import_nx_graph_to_db(graph, self.db)
 
     def populate_from_nx_graph(self, graph: nx.Graph):
-        import_from_nx_graph(graph, self.db)
+        import_nx_graph_to_db(graph, self.db)
