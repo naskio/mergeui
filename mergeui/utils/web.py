@@ -5,7 +5,7 @@ from core.schema import Model, Graph
 from web.schema import ColumnType, PartialModel, DataGraph, BaseValidationError
 
 
-def pretty_error(error: t.Union[BaseValidationError, str]) -> str:
+def pretty_error(error: t.Union[Exception, BaseValidationError, str]) -> str:
     if isinstance(error, pd.ValidationError):
         errs = error.errors()
         if errs:
