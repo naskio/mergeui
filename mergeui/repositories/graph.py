@@ -92,7 +92,7 @@ class GraphRepository(BaseRepository):
             q = (
                 q.with_(
                     "n",
-                ).call("text_search.search_all", f"'modelDocuments', '{query}'")
+                ).call("text_search.search_all", f"'{self.db_conn.settings.text_index_name}', '{query}'")
                 .yield_("node")
                 .with_("n, node")
                 .where("n", Operator.EQUAL, expression="node")

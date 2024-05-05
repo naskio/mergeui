@@ -14,12 +14,14 @@ class Settings(pds.BaseSettings):
     # UI settings
     app_name: str = "MergeUI"
     description: str = "UI for merged large language models"
-    email: pd.EmailStr
-    load_custom_js: bool = False
-    load_custom_css: bool = False
+    email: t.Optional[pd.EmailStr] = None
     favicon_path: Path = PROJECT_DIR / 'static/brand/favicon.ico'
-    max_graph_depth: int = 5
+    # gradio
     disable_gradio_app: bool = False
+    load_custom_js: bool = True
+    load_custom_css: bool = True
+    # limit results
+    max_graph_depth: t.Optional[int] = None
     results_limit: t.Optional[int] = None
     # db connection
     db_host: str = "localhost"
