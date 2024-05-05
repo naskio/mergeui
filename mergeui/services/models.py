@@ -1,7 +1,9 @@
 from gqlalchemy.query_builders.memgraph_query_builder import Order
+
 from core.base import BaseService
 from core.schema import Model, Graph
 from repositories.graph import GraphRepository
+from utils import filter_none
 from web.schema import GetModelLineageInputDTO, ListModelsInputDTO
 
 
@@ -39,7 +41,7 @@ class ModelService(BaseService):
         elif inp.sort_by == "recently updated":
             sort_key, sort_order = "updated_at", Order.DESC
         return self.repository.list_models(
-            query=inp.query,
+            query=None if not inp.query else inp.query,
             label=label,
             not_label=not_label,
             sort_key=sort_key,
@@ -52,13 +54,13 @@ class ModelService(BaseService):
         )
 
     def get_model_id_choices(self) -> list[str]:
-        return self.repository.list_property_values("id")
+        return filter_none(self.repository.list_property_values("id"))
 
     def get_license_choices(self) -> list[str]:
-        return self.repository.list_property_values("license")
+        return filter_none(self.repository.list_property_values("license"))
 
     def get_merge_method_choices(self) -> list[str]:
-        return self.repository.list_property_values("merge_method")
+        return filter_none(self.repository.list_property_values("merge_method"))
 
     def get_architecture_choices(self) -> list[str]:
-        return self.repository.list_property_values("architecture")
+        return filter_none(self.repository.list_property_values("architecture"))
