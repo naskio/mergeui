@@ -113,8 +113,11 @@ def _get_graph_ranges(positions: t.Dict[int, tuple[float, float]]) -> tuple[Rang
 
 def _scale_range(r: Range1d, c: float = 1.3) -> Range1d:
     w = r.end - r.start
-    new_w = w * c
-    padding = (new_w - w) / 2
+    if w == 0:
+        padding = c * 10
+    else:
+        new_w = w * c
+        padding = (new_w - w) / 2
     return Range1d(r.start - padding, r.end + padding)
 
 
