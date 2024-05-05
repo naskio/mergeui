@@ -253,6 +253,10 @@ class GraphPlotBuilder:
         icon_path = self.settings.project_dir / 'static' / 'icons' / f'{name}.svg'
         return load_image_as_data_uri(icon_path)
 
+    def mergeui_icon(self) -> str:
+        icon_path = self.settings.project_dir / 'static' / 'brand' / 'icon.svg'
+        return load_image_as_data_uri(icon_path)
+
     def mergeui_logo(self) -> tuple:
         logo_path = self.settings.project_dir / 'static' / 'brand' / 'logo.png'
         return load_image_as_np_array(logo_path)
@@ -300,7 +304,7 @@ class GraphPlotBuilder:
             HelpTool(
                 description="MergeUI",
                 redirect="https://github.com/naskio/mergeui",
-                icon=self.icon('mergeui'),
+                icon=self.mergeui_icon(),
             ),
         ]
 
