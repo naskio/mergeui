@@ -1,13 +1,10 @@
 import typing as t
-
 import gradio as gr
-import pandas as pds
 from gradio.components import Component as BaseGradioComponent
 from loguru import logger
-
 from services.models import ModelService
 from utils.graph_viz import Plot, GraphPlotBuilder
-from utils.web import pretty_error, models_as_dataframe
+from utils.web import pretty_error, models_as_dataframe, DataFrameDataType
 from web.schema import ColumnType, ExcludeOptionType, SortByOptionType, GenericRO, \
     GetModelLineageInputDTO, ListModelsInputDTO
 
@@ -51,14 +48,15 @@ def list_models(query: str, sort_by: SortByOptionType, columns: t.List[ColumnTyp
                                  base_model=None if base_model == [] else base_model,
                                  merge_method=merge_method, architecture=architecture)
         model_service = get_model_service(list_models)
-        df = models_as_dataframe(model_service.list_models(inp), inp.columns)
-        ro = GenericRO[pds.DataFrame](data=df)
+        dfd: DataFrameDataType = models_as_dataframe(model_service.list_models(inp), inp.columns)
+        ro = GenericRO[DataFrameDataType](data=dfd)
     except Exception as e:
-        ro = GenericRO[pds.DataFrame](success=False, message=pretty_error(e))
+        ro = GenericRO[DataFrameDataType](success=False, message=pretty_error(e))
     if not ro.success:
         return gr.DataFrame(visible=False), gr.Label(ro.message, visible=True, label="ERROR")
-    if ro.data.empty:
+    if not ro.data[0]:
         return gr.DataFrame(visible=False), gr.Label(
             f"No results found, please try different keywords/filters.", visible=True, label="INFO")
-    return gr.DataFrame(ro.data, visible=True, wrap=True, line_breaks=True,
+    return gr.DataFrame(value=ro.data[0], headers=ro.data[1], datatype=ro.data[2],
+                        visible=True, wrap=True, line_breaks=True,
                         label="Models", show_label=True), gr.Label(visible=False)
