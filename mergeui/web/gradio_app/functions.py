@@ -59,4 +59,4 @@ def list_models(query: str, sort_by: SortByOptionType, columns: t.List[ColumnTyp
             f"No results found, please try different keywords/filters.", visible=True, label="INFO")
     return gr.DataFrame(value=ro.data[0], headers=ro.data[1], datatype=ro.data[2],
                         visible=True, wrap=True, line_breaks=True,
-                        label="Models", show_label=True), gr.Label(visible=False)
+                        label=f"Models ({len(ro.data[0])})", show_label=True), gr.Label(visible=False)
