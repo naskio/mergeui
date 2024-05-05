@@ -1,17 +1,19 @@
-import typing as t
-import networkx as nx
-from networkx.drawing.nx_pydot import graphviz_layout
 import math
-from bokeh.plotting import figure
+import typing as t
+
+import networkx as nx
 from bokeh.models import MultiLine, HoverTool, Text, Label, TapTool, OpenURL, CrosshairTool, \
     HelpTool, Plot, ColumnDataSource, Arrow, Range1d, OpenHead, BoxZoomTool, \
     ResetTool, PanTool, WheelZoomTool, SaveTool, WheelPanTool, GraphRenderer, \
     StaticLayoutProvider
-from core.settings import Settings
+from bokeh.plotting import figure
+from networkx.drawing.nx_pydot import graphviz_layout
+
 from core.schema import Graph, DerivedFrom, Model
-from utils import format_datetime
-from web.schema import ColumnType
+from core.settings import Settings
+from utils import format_datetime, format_large_number
 from utils.images import load_image_as_data_uri, load_image_as_np_array
+from web.schema import ColumnType
 
 
 # ##### Helpers #####
@@ -55,9 +57,13 @@ def _get_graph_data_sources(model_id: str, graph: Graph, positions: dict) -> tup
             "x": x,
             "y": y,
             # properties
-            **node.dict(include=set(t.get_args(ColumnType)), exclude={"created_at", "updated_at"}),
+            **node.dict(include=set(t.get_args(ColumnType)), exclude={
+                "created_at", "updated_at", "likes", "downloads"
+            }),
             "created_at": format_datetime(node.created_at),
             "updated_at": format_datetime(node.updated_at),
+            "likes": format_large_number(node.likes),
+            "downloads": format_large_number(node.downloads),
             # meta
             "is_selected": is_selected,
             "is_merged_model": is_merged_model,
@@ -386,6 +392,10 @@ class GraphPlotBuilder:
         self.p.x_range = _scale_range(graph_range_x, 1.25)
         self.p.y_range = _scale_range(graph_range_y, 1.25)
 
+    def _hide_plot_axis(self):
+        self.p.xaxis.visible = False
+        self.p.yaxis.visible = False
+
     def _add_text_watermark(self):
         w = self.p.x_range.end - self.p.x_range.start
         h = self.p.y_range.end - self.p.y_range.start
@@ -468,4 +478,5 @@ class GraphPlotBuilder:
         self._add_click_tools()
         self._add_hover_tools()
         self._add_plot_legend()
+        self._hide_plot_axis()
         return self.p

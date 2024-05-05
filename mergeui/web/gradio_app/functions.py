@@ -1,12 +1,14 @@
 import typing as t
-from loguru import logger
+
 import gradio as gr
 from gradio.components import Component as BaseGradioComponent
+from loguru import logger
+
 from services.models import ModelService
+from utils.graph_viz import Plot, GraphPlotBuilder
+from utils.web import pretty_error, models_as_partials
 from web.schema import ColumnType, ExcludeOptionType, SortByOptionType, GenericRO, \
     GetModelLineageInputDTO, ListModelsInputDTO, PartialModel
-from utils.web import pretty_error, models_as_partials
-from utils.graph_viz import graph_as_plot, Plot
 
 
 def inject_model_service(model_service: ModelService):
@@ -25,8 +27,11 @@ def get_model_lineage(model_id: str) -> t.Tuple[BaseGradioComponent, BaseGradioC
     logger.trace(f"call: {model_id}")
     try:
         inp = GetModelLineageInputDTO(id=model_id)  # validate input
-        graph = get_model_service(get_model_lineage).get_model_lineage(inp)  # get sub-graph
-        ro = GenericRO[Plot](data=graph_as_plot(inp.id, graph))
+        model_service = get_model_service(get_model_lineage)
+        settings = model_service.repository.db_conn.settings
+        graph = model_service.get_model_lineage(inp)
+        plot = GraphPlotBuilder(settings).build(inp.id, graph)
+        ro = GenericRO[Plot](data=plot)
     except Exception as e:
         ro = GenericRO[Plot](success=False, message=pretty_error(e))
     if not ro.success:
@@ -42,7 +47,8 @@ def list_models(query: str, sort_by: SortByOptionType, columns: t.List[ColumnTyp
         # validate input
         inp = ListModelsInputDTO(query=query, sort_by=sort_by, columns=columns, exclude=exclude, license=license_,
                                  base_model=base_model, merge_method=merge_method, architecture=architecture)
-        data = models_as_partials(get_model_service(list_models).list_models(inp), inp.columns)
+        model_service = get_model_service(list_models)
+        data = models_as_partials(model_service.list_models(inp), inp.columns)
         ro = GenericRO[list[PartialModel]](data=data)
     except Exception as e:
         ro = GenericRO[list[PartialModel]](success=False, message=pretty_error(e))
