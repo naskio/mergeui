@@ -24,3 +24,7 @@ def format_datetime(t_: dt.datetime) -> t.Optional[str]:
 def format_large_number(n_: int) -> t.Optional[str]:
     if n_ is not None:
         return numerize.numerize(n_)
+
+
+def filter_none(d: list) -> list:
+    return [x for x in d if x is not None]

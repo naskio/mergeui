@@ -1,0 +1,4 @@
+/* Hide sort buttons at gr.DataFrame */
+.sort-button {
+    display: none !important;
+}
