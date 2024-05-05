@@ -156,14 +156,13 @@ def get_position_between(a: tuple[float, float], b: tuple[float, float], scaler:
 
 # ##### Viz #####
 
-def get_is_permissive_license(license_: str) -> t.Optional[bool]:
+def get_is_permissive_license(license_: t.Optional[str]) -> t.Optional[bool]:
+    if not license_:
+        return None
     license_ = license_.lower()
     permissive_licenses = ['mit', 'bsd', 'apache-2.0', 'openrail']
     if any(perm_license in license_ for perm_license in permissive_licenses):
         return True
-    # commercial_licenses = []
-    # if any(comm_license in license_ for comm_license in commercial_licenses):
-    #     return False
     return False
 
 
