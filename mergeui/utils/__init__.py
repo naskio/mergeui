@@ -1,6 +1,6 @@
 import datetime as dt
 import typing as t
-
+import yaml
 from numerize import numerize
 
 
@@ -28,3 +28,11 @@ def format_large_number(n_: int) -> t.Optional[str]:
 
 def filter_none(d: list) -> list:
     return [x for x in d if x is not None]
+
+
+def parse_yaml(yaml_str: str) -> list[t.Union[dict, list]]:
+    try:
+        docs = list(yaml.safe_load_all(yaml_str))  # support multi-document yaml
+        return [doc for doc in docs if doc is not None]
+    except yaml.YAMLError:
+        return []
