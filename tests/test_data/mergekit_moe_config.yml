@@ -1,0 +1,30 @@
+base_model: mlabonne/Marcoro14-7B-slerp
+experts:
+  - source_model: openchat/openchat-3.5-1210
+    positive_prompts:
+      - "chat"
+      - "assistant"
+      - "tell me"
+      - "explain"
+  - source_model: beowolx/CodeNinja-1.0-OpenChat-7B
+    positive_prompts:
+      - "code"
+      - "python"
+      - "javascript"
+      - "programming"
+      - "algorithm"
+  - source_model: maywell/PiVoT-0.1-Starling-LM-RP
+    positive_prompts:
+      - "storywriting"
+      - "write"
+      - "scene"
+      - "story"
+      - "character"
+  - source_model: WizardLM/WizardMath-7B-V1.1
+    positive_prompts:
+      - "reason"
+      - "math"
+      - "mathematics"
+      - "solve"
+      - "count"
+tokenizer_source: union

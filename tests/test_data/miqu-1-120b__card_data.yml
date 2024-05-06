@@ -1,0 +1,13 @@
+base_model:
+  - 152334H/miqu-1-70b-sf
+language:
+  - en
+  - de
+  - fr
+  - es
+  - it
+library_name: transformers
+tags:
+  - mergekit
+  - merge
+license: other
