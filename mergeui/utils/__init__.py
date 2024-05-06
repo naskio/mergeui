@@ -26,7 +26,9 @@ def format_large_number(n_: int) -> t.Optional[str]:
         return numerize.numerize(n_)
 
 
-def filter_none(d: list) -> list:
+def filter_none(d: t.Union[list, dict]) -> t.Union[list, dict]:
+    if isinstance(d, dict):
+        return {k: v for k, v in d.items() if v is not None}
     return [x for x in d if x is not None]
 
 

@@ -2,7 +2,7 @@ import pytest
 import pprint
 from huggingface_hub import hf_api
 from utils.hub import list_hf_models, get_hf_model_by_id, download_mergekit_config_yaml_file, \
-    download_readme_markdown_file
+    download_readme_markdown_file, load_model_card, get_data_origin
 from core.settings import Settings
 
 settings = Settings()
@@ -25,7 +25,7 @@ def public_repo_listing_model_info() -> hf_api.ModelInfo:
         author='mlabonne',
         model_name="Zebrafish-7B",
         tags=['arxiv:2403.19522', 'merge'],
-        sort="last_modified",
+        sort="lastModified",
         limit=1,
     )[0]
     pprint.pprint(model)
@@ -109,6 +109,7 @@ def test_download_mergekit_config_yaml_file__gated_repository(gated_repo_listing
     with pytest.raises(hf_api.GatedRepoError):
         file_path = download_mergekit_config_yaml_file(gated_repo_listing_model_info)
         assert file_path is None
+        raise hf_api.GatedRepoError("dummy for testing, GatedRepoError handled by download_mergekit_config_yaml_file")
 
 
 def test_download_readme_markdown_file(public_repo_listing_model_info):
@@ -125,3 +126,47 @@ def test_download_readme_markdown_file__gated_repository(gated_repo_listing_mode
     assert file_path.name == "README.md"
     assert file_path.is_file()
     assert file_path.stat().st_size > 0
+
+
+def test_load_model_card(public_repo_listing_model_info):
+    card = load_model_card(public_repo_listing_model_info)
+    assert card is not None
+    assert card.data is not None
+    assert card.data.license == 'cc-by-nc-4.0'
+
+
+def test_load_model_card__gated(gated_repo_listing_model_info):
+    card = load_model_card(gated_repo_listing_model_info)
+    print(type(card), card)
+    print(type(card.data), card.data)
+    assert card is not None
+    assert card.data is not None
+    assert card.data.license == 'other'
+
+
+def test_get_data_origin():
+    # listing
+    expected = "https://huggingface.co/api/models?author=mlabonne&model_name=Zebrafish-7B&tags=arxiv%3A2403.19522&tags=merge&sort=lastModified&limit=1"
+    origin = get_data_origin(
+        author='mlabonne',
+        model_name="Zebrafish-7B",
+        tags=['arxiv:2403.19522', 'merge'],
+        sort="lastModified",
+        limit=1,
+    )
+    assert origin == expected
+    # retrieve
+    model_id = "mlabonne/Zebrafish-7B"
+    expected = "https://huggingface.co/api/models/mlabonne/Zebrafish-7B"
+    origin = get_data_origin(model_id=model_id)
+    assert origin == expected
+    # download mergekit_config.yml
+    config_path = settings.project_dir / "models" / "mlabonne" / "Zebrafish-7B" / "mergekit_config.yml"
+    expected = "https://huggingface.co/mlabonne/Zebrafish-7B/resolve/main/mergekit_config.yml"
+    origin = get_data_origin(model_id=model_id, filename_or_path=config_path)
+    assert origin == expected
+    # download README.md
+    filename = "README.md"
+    expected = "https://huggingface.co/mlabonne/Zebrafish-7B/resolve/main/README.md"
+    origin = get_data_origin(model_id=model_id, filename_or_path=filename)
+    assert origin == expected
