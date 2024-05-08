@@ -28,3 +28,6 @@ class Settings(pds.BaseSettings):
     db_port: int = 7687  # use 7688 for test db
     # db settings
     text_index_name: str = "modelDocuments"
+
+
+settings = Settings()
