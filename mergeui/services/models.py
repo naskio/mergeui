@@ -1,9 +1,8 @@
 from gqlalchemy.query_builders.memgraph_query_builder import Order
-
+from utils import filter_none
 from core.base import BaseService
 from core.schema import Model, Graph
-from repositories.graph import GraphRepository
-from utils import filter_none
+from repositories import GraphRepository
 from web.schema import GetModelLineageInputDTO, ListModelsInputDTO
 
 
