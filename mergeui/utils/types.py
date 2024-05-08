@@ -29,19 +29,3 @@ def get_fields_from_class(class_: t.Type, type_: t.Optional[t.Type] = None, incl
 def get_literal_type_options(type_: t.Type) -> list[str]:
     """Get options from a Literal type"""
     return list(t.get_args(type_))
-
-# @classmethod
-# def fields(cls) -> list[str]:
-#     return get_fields_from_class(cls, include_optionals=True)
-#
-# @classmethod
-# def dt_fields(cls) -> list[str]:
-#     return get_fields_from_class(cls, dt.datetime, include_optionals=True)
-#
-# @classmethod
-# def float_fields(cls) -> list[str]:
-#     return get_fields_from_class(cls, float, include_optionals=True)
-#
-# @classmethod
-# def int_fields(cls) -> list[str]:
-#     return get_fields_from_class(cls, int, include_optionals=True)
