@@ -2,10 +2,6 @@ import typing as t
 import dataclasses as dc
 import datetime as dt
 import gqlalchemy as gq
-from core.settings import Settings
-from utils.db import create_db_connection
-
-db = create_db_connection(Settings())
 
 
 @dc.dataclass
@@ -16,7 +12,7 @@ class Graph:
 
 class Model(gq.Node):
     # Supported types: bool, int, float, str, list, dict, dt.datetime
-    id: str = gq.Field(index=True, exists=True, unique=True, db=db)
+    id: str  # = gq.Field(index=True, exists=True, unique=True, db=get_db_connection().db)  # manage manually
     url: t.Optional[str]  # pd.AnyHttpUrl can't be used
     name: t.Optional[str]
     description: t.Optional[str]
@@ -28,6 +24,18 @@ class Model(gq.Node):
     downloads: t.Optional[int]
     created_at: t.Optional[dt.datetime]
     updated_at: t.Optional[dt.datetime]
+    # evaluation
+    arc_score: t.Optional[float]
+    hella_swag_score: t.Optional[float]
+    mmlu_score: t.Optional[float]
+    truthfulqa_score: t.Optional[float]
+    winogrande_score: t.Optional[float]
+    gsm8k_score: t.Optional[float]
+    average_score: t.Optional[float]
+    evaluated_at: t.Optional[dt.datetime]
+    # technical
+    indexed: t.Optional[bool]
+    indexed_at: t.Optional[dt.datetime]
 
 
 class MergedModel(Model):
