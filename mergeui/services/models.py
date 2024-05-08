@@ -1,7 +1,7 @@
 from gqlalchemy.query_builders.memgraph_query_builder import Order
 from utils import filter_none
 from core.base import BaseService
-from core.schema import Model, Graph
+import core.schema
 from repositories import GraphRepository
 from web.schema import GetModelLineageInputDTO, ListModelsInputDTO
 
@@ -13,14 +13,14 @@ class ModelService(BaseService):
     def get_model_lineage(
             self,
             inp: GetModelLineageInputDTO,
-    ) -> Graph:
+    ) -> 'core.schema.Graph':
         return self.repository.get_sub_graph(
             id_=inp.id,
             label="Model",
             max_depth=self.repository.db_conn.settings.max_graph_depth,
         )
 
-    def list_models(self, inp: ListModelsInputDTO) -> list[Model]:
+    def list_models(self, inp: ListModelsInputDTO) -> list['core.schema.Model']:
         # exclude feature
         label, not_label = "Model", None
         if inp.exclude == "base models":

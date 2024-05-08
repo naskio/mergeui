@@ -37,7 +37,7 @@ def convert_nx_graph_to_dict(graph: nx.Graph) -> dict:
 def save_nx_graph_to_json_file(graph: nx.Graph, json_path: Path) -> None:
     logger.info(f"Saving graph to: {json_path}")
     json_graph = convert_nx_graph_to_dict(graph)
-    json_path.write_text(json.dumps(json_graph, indent=4))
+    json_path.write_text(json.dumps(json_graph, indent=4))  # _TODO: handle dt.datetime fields serialization
 
 
 def load_nx_graph_from_json_file(json_path: Path) -> nx.Graph:
@@ -48,6 +48,7 @@ def load_nx_graph_from_json_file(json_path: Path) -> nx.Graph:
     relationships = json_graph.get("relationships", [])
     excluded_keys = []  # ["id", "labels"]
     for node in nodes:
+        # _TODO: handle dt.datetime fields parsing
         graph.add_node(node["id"], **{k: v for k, v in node.items() if k not in excluded_keys and v is not None})
     excluded_keys = ["source", "target"]
     for rel in relationships:
@@ -96,14 +97,14 @@ def export_db_as_nx_graph(db: gq.Memgraph) -> nx.Graph:
     # NB: doesn't support multiple edges between nodes (only one exported if we have multiple edges between nodes)
     graph = translator.get_instance()
     fixed_graph = nx.MultiDiGraph()
-    for node in graph.nodes(data=True):
-        node_for_adding_ = node[1]["id"]
-        attrs_ = {k: v for k, v in node[1].items() if k != "label"}
-        if node[1].get("label"):
-            attrs_["labels"] = str(node[1]["label"]).split(":")
-        fixed_graph.add_node(node_for_adding_, **attrs_)
-    for edge in graph.edges(data=True):
-        id_src = graph.nodes[edge[0]]["id"]
-        id_dst = graph.nodes[edge[1]]["id"]
-        fixed_graph.add_edge(id_src, id_dst, **edge[2])
+    for node_for_adding_, node_attrs in graph.nodes(data=True):
+        new_node_for_adding = node_attrs["id"] or node_for_adding_
+        new_attrs = {k: v for k, v in node_attrs.items() if k != "label"}
+        if node_attrs.get("label"):
+            new_attrs["labels"] = str(node_attrs["label"]).split(":")
+        fixed_graph.add_node(new_node_for_adding, **new_attrs)
+    for start, end, edge_attrs in graph.edges(data=True):
+        id_src = graph.nodes[start]["id"]
+        id_dst = graph.nodes[end]["id"]
+        fixed_graph.add_edge(id_src, id_dst, **edge_attrs)
     return fixed_graph

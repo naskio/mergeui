@@ -1,5 +1,5 @@
 import typing as t
-from utils.types import create_fields_literal_type_from_class, get_fields_from_class, \
+from utils.types import create_literal_type, get_fields_from_class, \
     get_literal_type_options
 
 
@@ -10,7 +10,7 @@ class TestClass:
 
 
 def test_create_fields_literal_type_from_class():
-    assert create_fields_literal_type_from_class(TestClass) == t.Literal["a", "b", "c"]
+    assert create_literal_type(get_fields_from_class(TestClass)) == t.Literal["a", "b", "c"]
 
 
 def test_get_fields_from_class():
