@@ -1,21 +1,58 @@
 from loguru import logger
+import datetime as dt
+from pathlib import Path
 import gqlalchemy as gq
 import networkx as nx
-from pathlib import Path
-from core.settings import Settings
+import core.settings
+from core.schema import Model
 from core.base import BaseDatabaseConnection
-from utils import parse_iso_datetime_str
-from utils.db import create_db_connection
-from utils.graph import load_nx_graph_from_json_file, import_nx_graph_to_db
+from utils import parse_iso_dt, aware_to_naive_dt
+from utils.types import get_fields_from_class
+from utils.nx import load_nx_graph_from_json_file, import_nx_graph_to_db
+
+
+def create_db_connection(settings: 'core.settings.Settings') -> gq.Memgraph:
+    logger.debug(f"Creating database connection for {settings.app_name}...")
+    return gq.Memgraph(
+        host=settings.mg_host,
+        port=settings.mg_port,
+        username=settings.mg_username,
+        password=settings.mg_password,
+        encrypted=settings.mg_encrypted,
+        client_name=settings.mg_client_name,
+        lazy=settings.mg_lazy,
+    )
 
 
 class DatabaseConnection(BaseDatabaseConnection):
-    settings: Settings
+    # for import_from_cypher_file, export_to_cypher_file: use Memgraph Lab UI
+    settings: 'core.settings.Settings'
     db: gq.Memgraph
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: 'core.settings.Settings'):
         self.settings = settings
         self.db = create_db_connection(self.settings)
+
+    def setup(self, reset_if_not_empty: bool = True):
+        logger.info("Setting up database...")
+        if reset_if_not_empty and not self.is_empty():
+            self.reset()
+        # existing constraints
+        self.db.create_constraint(gq.MemgraphConstraintExists("Model", property="id"))
+        # unique constraints
+        self.db.create_constraint(gq.MemgraphConstraintUnique("Model", property="id"))
+        logger.debug("Constraints created")
+        # label indexes
+        self.db.create_index(gq.MemgraphIndex("Model"))
+        self.db.create_index(gq.MemgraphIndex("MergedModel"))
+        # property indexes
+        self.db.create_index(gq.MemgraphIndex("Model", property="id"))
+        # edge indexes
+        self.db.execute(f"CREATE EDGE INDEX ON :DERIVED_FROM")
+        # text index
+        self.db.execute(f"CREATE TEXT INDEX {self.settings.text_index_name} ON :Model")
+        logger.debug("Indexes created")
+        logger.success("Database setup completed.")
 
     def reset(self):
         logger.info("Resetting database...")
@@ -23,30 +60,24 @@ class DatabaseConnection(BaseDatabaseConnection):
         logger.debug(f"Database dropped")
         for db_c in self.db.get_constraints():
             self.db.drop_constraint(db_c)
-        logger.debug(f"Constraints dropped {self.db.get_constraints()}")
+        logger.debug(f"Constraints dropped")
         for db_i in self.db.get_indexes():
             self.db.drop_index(db_i)
+        self.db.execute(f"DROP EDGE INDEX ON :DERIVED_FROM")
         self.db.execute(f"DROP TEXT INDEX {self.settings.text_index_name}")
-        logger.debug(f"Indexes dropped {self.db.get_indexes()}")
+        logger.debug(f"Indexes dropped")
+        assert self.is_empty(), "Database is not empty after reset."
         logger.success("Database reset completed.")
 
-    def setup(self):
-        logger.info("Setting up database...")
-        self.db.create_index(gq.MemgraphIndex("Model"))
-        self.db.create_index(gq.MemgraphIndex("Model", property="id"))
-        logger.debug("Indexes created")
-        self.db.create_constraint(gq.MemgraphConstraintExists("Model", property="id"))
-        self.db.create_constraint(gq.MemgraphConstraintUnique("Model", property="id"))
-        self.db.execute(f"CREATE TEXT INDEX {self.settings.text_index_name} ON :Model")
-        logger.debug("Constraints created")
-        logger.success("Database setup completed.")
+    def is_empty(self) -> bool:
+        return not self.db.get_constraints() and not self.db.get_indexes()
 
-    def populate_from_json(self, json_path: Path):
-        graph = load_nx_graph_from_json_file(json_path)
-        for node in graph.nodes:  # fix graph updated_at and created_at property types
-            graph.nodes[node]["created_at"] = parse_iso_datetime_str(graph.nodes[node]["created_at"])
-            graph.nodes[node]["updated_at"] = parse_iso_datetime_str(graph.nodes[node]["updated_at"])
-        import_nx_graph_to_db(graph, self.db)
-
-    def populate_from_nx_graph(self, graph: nx.Graph):
+    def populate_from_json_file(self, json_path: Path):
+        graph: nx.Graph = load_nx_graph_from_json_file(json_path)
+        for node in graph.nodes:  # handling dt.datetime fields
+            for dt_field in get_fields_from_class(Model, dt.datetime, include_optionals=True):
+                if dt_field in graph.nodes[node]:
+                    value = graph.nodes[node][dt_field]
+                    if value and isinstance(value, str):
+                        graph.nodes[node][dt_field] = aware_to_naive_dt(parse_iso_dt(graph.nodes[node][dt_field]))
         import_nx_graph_to_db(graph, self.db)

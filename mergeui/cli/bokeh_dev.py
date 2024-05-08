@@ -1,10 +1,11 @@
 from bokeh.io import curdoc
-from core.settings import Settings
-from web.gradio_app.main import model_service
-from web.schema import GetModelLineageInputDTO
+from core.dependencies import get_settings, get_model_service
 from utils.graph_viz import GraphPlotBuilder
+from web.schema import GetModelLineageInputDTO
 
-settings = Settings()
+settings = get_settings()
+model_service = get_model_service()
+
 model_id: str = "Q-bert/MetaMath-Cybertron"
 graph = model_service.get_model_lineage(GetModelLineageInputDTO(
     id=model_id
