@@ -24,8 +24,13 @@ class Settings(pds.BaseSettings):
     max_graph_depth: t.Optional[int] = None
     results_limit: t.Optional[int] = None
     # db connection
-    db_host: str = "localhost"
-    db_port: int = 7687  # use 7688 for test db
+    mg_host: str = "localhost"
+    mg_port: int = 7687  # use 7688 for test db
+    mg_username: str = ""
+    mg_password: str = ""
+    mg_encrypted: bool = False
+    mg_client_name: str = "MergeUI"
+    mg_lazy: bool = False
     # db settings
     text_index_name: str = "modelDocuments"
 
