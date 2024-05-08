@@ -2,9 +2,13 @@ import typing as t
 from typing_extensions import TypedDict
 
 
-def create_partial_type_from_class(name: str, class_: t.Type) -> t.Type:
+def create_partial_type_from_class(name: str, class_: t.Type, total: bool = True) -> t.Type:
     """Create a TypedDict type from a class"""
-    return TypedDict(name, class_.__annotations__.items(), total=False)
+    all_classes = [*class_.__bases__, class_]
+    fields = {}
+    for c in all_classes:
+        fields.update(c.__annotations__)
+    return TypedDict(name, fields.items(), total=total)
 
 
 def create_literal_type(options: t.Iterable) -> t.Type:
