@@ -7,7 +7,7 @@ settings = get_settings()
 
 app = fa.FastAPI(
     title=settings.app_name,
-    description=f"{settings.description} by {settings.email}",
+    description=f"{settings.description} by {settings.author}",
 )
 
 app.include_router(api_router, prefix="/api", tags=["API"])

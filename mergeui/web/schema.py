@@ -1,44 +1,41 @@
 import typing as t
-from typing_extensions import TypedDict
 import pydantic as pd
-import re
-import gqlalchemy as gq
+import datetime as dt
 from core.schema import Model
-from utils.types import create_partial_type, create_literal_type
+from utils.types import get_fields_from_class, create_partial_type_from_class, create_literal_type
 
 BaseValidationError = t.Union[pd.ValidationError, ValueError, AssertionError]
-PartialModel = create_partial_type("PartialModel", Model)
-DataNode = create_partial_type("DataNode", gq.Node)
-DataRelationship = create_partial_type("DataRelationship", gq.Relationship)
-ColumnType = create_literal_type(Model)
 
+MODEL_FIELDS = get_fields_from_class(Model, include_optionals=True)
+MODEL_DT_FIELDS = get_fields_from_class(Model, dt.datetime, include_optionals=True)
+MODEL_INT_FIELDS = get_fields_from_class(Model, int, include_optionals=True)
+MODEL_FLOAT_FIELDS = get_fields_from_class(Model, float, include_optionals=True)
+DISPLAY_FIELDS = [field for field in MODEL_FIELDS if field not in Model.hidden_fields()]
 
-class DataGraph(TypedDict):
-    nodes: list[DataNode]
-    relationships: list[DataRelationship]
+PartialModel = create_partial_type_from_class("PartialModel", Model, total=False)
 
-
-MODEL_ID_REGEX = re.compile(r'^[-.\w]+/[-.\w]+$')
+DisplayColumnType = create_literal_type(DISPLAY_FIELDS)
 
 MergeMethodType = t.Literal["linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
 "breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
 ExcludeOptionType = t.Literal["base models", "merged models"]
-SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated"]
+SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated",
+"average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
 
 
 class GetModelLineageInputDTO(pd.BaseModel):
-    id: str = pd.Field(description="Model ID", pattern=MODEL_ID_REGEX, min_length=1)
+    id: str = pd.Field(description="Model ID", min_length=1)
 
 
 class ListModelsInputDTO(pd.BaseModel):
     query: t.Optional[str] = pd.Field(None, description="Search query")
     sort_by: t.Optional[SortByOptionType] = pd.Field(None, description="Sort by")
-    columns: t.Optional[t.List[ColumnType]] = pd.Field(None, description="Columns to show")
+    display_columns: t.Optional[t.List[DisplayColumnType]] = pd.Field(None, description="Columns to display")
     exclude: t.Optional[ExcludeOptionType] = pd.Field(None, description="Hide models")
     license: t.Optional[str] = pd.Field(None, description="License")
     merge_method: t.Optional[str] = pd.Field(None, description="Merge strategy")
     architecture: t.Optional[str] = pd.Field(None, description="Model architecture")
-    base_model: t.Optional[str] = pd.Field(None, description="Base model ID", pattern=MODEL_ID_REGEX)
+    base_model: t.Optional[str] = pd.Field(None, description="Base model ID", min_length=1)
 
 
 DataT = t.TypeVar('DataT')
@@ -51,3 +48,11 @@ class GenericRO(pd.BaseModel, t.Generic[DataT]):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+DataFrameDataType = tuple[list[list], list[str], list[str]]
+
+
+class DataGraph(pd.BaseModel):
+    nodes: list[dict] = pd.Field(default_factory=list)
+    relationships: list[dict] = pd.Field(default_factory=list)
