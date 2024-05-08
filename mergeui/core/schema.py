@@ -2,6 +2,7 @@ import typing as t
 import dataclasses as dc
 import datetime as dt
 import gqlalchemy as gq
+from utils import titlify
 
 
 @dc.dataclass
@@ -18,24 +19,32 @@ class Model(gq.Node):
     description: t.Optional[str]
     license: t.Optional[str]
     author: t.Optional[str]
-    merge_method: t.Optional[str] = gq.Field(description="Merge strategy")  # t.Optional[MergeMethodType] can't be used
+    merge_method: t.Optional[str] = gq.Field(title="merge strategy")  # t.Optional[MergeMethodType] can't be used
     architecture: t.Optional[str]
     likes: t.Optional[int]
     downloads: t.Optional[int]
     created_at: t.Optional[dt.datetime]
     updated_at: t.Optional[dt.datetime]
     # evaluation
-    arc_score: t.Optional[float]
-    hella_swag_score: t.Optional[float]
-    mmlu_score: t.Optional[float]
-    truthfulqa_score: t.Optional[float]
-    winogrande_score: t.Optional[float]
-    gsm8k_score: t.Optional[float]
-    average_score: t.Optional[float]
+    arc_score: t.Optional[float] = gq.Field(title="ARC")
+    hella_swag_score: t.Optional[float] = gq.Field(title="HellaSwag")
+    mmlu_score: t.Optional[float] = gq.Field(title="MMLU")
+    truthfulqa_score: t.Optional[float] = gq.Field(title="TruthfulQA")
+    winogrande_score: t.Optional[float] = gq.Field(title="Winogrande")
+    gsm8k_score: t.Optional[float] = gq.Field(title="GSM8K")
+    average_score: t.Optional[float] = gq.Field(title="average")
     evaluated_at: t.Optional[dt.datetime]
     # technical
     indexed: t.Optional[bool]
     indexed_at: t.Optional[dt.datetime]
+
+    @classmethod
+    def hidden_fields(cls) -> list[str]:
+        return ["indexed", "indexed_at"]
+
+    @classmethod
+    def field_label(cls, key: str) -> str:
+        return titlify(getattr(getattr(cls.__fields__.get(key, None), "field_info", None), "title", None) or key)
 
 
 class MergedModel(Model):

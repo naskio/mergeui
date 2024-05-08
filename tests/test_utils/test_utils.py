@@ -1,7 +1,7 @@
 import pytest
 import datetime as dt
 from pathlib import Path
-from utils import parse_yaml, filter_none, format_large_number, naive_to_aware_dt, aware_to_naive_dt, pretty_format_dt, \
+from utils import parse_yaml, filter_none, pretty_format_int, naive_to_aware_dt, aware_to_naive_dt, pretty_format_dt, \
     parse_iso_dt, iso_format_dt
 
 
@@ -69,14 +69,14 @@ def test_filter_none():
     assert filter_none(0j) == 0j
 
 
-def test_format_large_number():
-    assert format_large_number(9) == '9'
-    assert format_large_number(958) == '958'
-    assert format_large_number(1256) == '1.26K'
-    assert format_large_number(1312000) == '1.31M'
-    assert format_large_number(1000000000) == '1B'
-    assert format_large_number(1000000000000) == '1T'
-    assert format_large_number(1000000000000000) == '1000000000000000'
+def test_pretty_format_int():
+    assert pretty_format_int(9) == '9'
+    assert pretty_format_int(958) == '958'
+    assert pretty_format_int(1256) == '1.26K'
+    assert pretty_format_int(1312000) == '1.31M'
+    assert pretty_format_int(1000000000) == '1B'
+    assert pretty_format_int(1000000000000) == '1T'
+    assert pretty_format_int(1000000000000000) == '1000000000000000'
 
 
 def test_naive_to_aware_dt(naive_dt, utc_dt, no_utc_dt):

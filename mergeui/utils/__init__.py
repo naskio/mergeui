@@ -40,10 +40,19 @@ def iso_format_dt(t_: t.Optional[dt.datetime]) -> t.Optional[str]:
         return f"{t_.strftime('%Y-%m-%dT%H:%M:%S.%f')}Z"
 
 
-def format_large_number(n_: int) -> t.Optional[str]:
+def pretty_format_int(n_: t.Optional[int]) -> t.Optional[str]:
     """Format large number to human-readable string."""
     if n_ is not None:
         return numerize.numerize(n_)
+
+
+def titlify(s: t.Optional[str]) -> t.Optional[str]:
+    """Convert snake_case string to title case."""
+    if not s:
+        return s
+    if s[0].isupper():
+        return s
+    return s.replace("_", " ").title()
 
 
 def filter_none(d: t.Union[list, dict, t.Any]) -> t.Union[list, dict, t.Any]:
