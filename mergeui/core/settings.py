@@ -14,6 +14,7 @@ class Settings(pds.BaseSettings):
     # UI settings
     app_name: str = "MergeUI"
     description: str = "UI for merged large language models"
+    author: t.Optional[str] = None
     email: t.Optional[pd.EmailStr] = None
     favicon_path: Path = PROJECT_DIR / 'static/brand/favicon.ico'
     # gradio
