@@ -1,24 +1,28 @@
-import fastapi as fa
 from functools import lru_cache
-from core.settings import Settings
+import core.settings
 from core.db import DatabaseConnection
-from repositories.graph import GraphRepository
-from services.models import ModelService
+from repositories import GraphRepository
+from services import ModelService
 
 
 @lru_cache
-def get_settings():
-    return Settings()
+def get_settings() -> 'core.settings.Settings':
+    return core.settings.settings
 
 
 @lru_cache
-def get_db_connection(settings=fa.Depends(get_settings)):
+def get_db_connection():
+    settings = get_settings()
     return DatabaseConnection(settings)
 
 
-def get_graph_repository(db_conn=fa.Depends(get_db_connection)) -> GraphRepository:
+@lru_cache
+def get_graph_repository() -> GraphRepository:
+    db_conn = get_db_connection()
     return GraphRepository(db_conn)
 
 
-def get_model_service(repository=fa.Depends(get_graph_repository)) -> ModelService:
-    return ModelService(repository)
+@lru_cache
+def get_model_service() -> ModelService:
+    graph_repository = get_graph_repository()
+    return ModelService(graph_repository)
