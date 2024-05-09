@@ -48,7 +48,7 @@
       "truthfulqa_score": 0.5770577317207616,
       "winogrande_score": 0.7963693764798737,
       "gsm8k_score": 0.7050796057619408,
-      "average_score": 0.705952406398804,
+      "average_score": null,
       "evaluated_at": "2023-12-07T21:43:38.456468Z",
       "indexed_at": "2024-01-01T00:00:00.000Z",
       "labels": [
@@ -74,7 +74,7 @@
       "gsm8k_score": 0.6239575435936315,
       "average_score": 0.6712789429905199,
       "evaluated_at": "2023-12-04T15:57:32.180703Z",
-      "indexed_at": "2024-01-01T00:00:00.000Z",
+      "indexed_at": null,
       "labels": [
         "Model"
       ]
@@ -90,7 +90,7 @@
       "downloads": 3082,
       "updated_at": "2024-03-08T10:26:27.000Z",
       "created_at": "2023-12-02T00:07:53.000Z",
-      "arc_score": 0.6825938566552902,
+      "arc_score": null,
       "hella_swag_score": 0.8584943238398726,
       "mmlu_score": 0.6323409747684522,
       "truthfulqa_score": 0.646322826116642,
@@ -120,7 +120,7 @@
       "winogrande_score": 0.7576953433307024,
       "gsm8k_score": 0.6884003032600455,
       "average_score": 0.6578313598302907,
-      "evaluated_at": "2023-12-04T19:35:59.251082Z",
+      "evaluated_at": null,
       "indexed_at": "2024-01-01T00:00:00.000Z",
       "labels": [
         "Model"
@@ -138,7 +138,7 @@
       "created_at": "2023-09-20T13:03:50.000Z",
       "arc_score": 0.5998293515358362,
       "hella_swag_score": 0.8331009759012149,
-      "mmlu_score": 0.6416448378492244,
+      "mmlu_score": null,
       "truthfulqa_score": 0.4215317106968115,
       "winogrande_score": 0.7861089187056038,
       "gsm8k_score": 0.3707354056103108,
