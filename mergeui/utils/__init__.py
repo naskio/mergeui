@@ -46,6 +46,13 @@ def pretty_format_int(n_: t.Optional[int]) -> t.Optional[str]:
         return numerize.numerize(n_)
 
 
+def pretty_format_float(f_: t.Optional[float], suffix: str = "") -> t.Optional[str]:
+    """Format float as rounded percentage (0.24123 => 24.12)."""
+    if f_ is not None:
+        assert 0.0 <= f_ <= 1.0, f"Expected float in [0-1] but got {f_}"
+        return f"{round(f_ * 100, 2)}{suffix}"
+
+
 def titlify(s: t.Optional[str]) -> t.Optional[str]:
     """Convert snake_case string to title case."""
     if not s:

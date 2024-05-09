@@ -2,7 +2,7 @@ import pytest
 import datetime as dt
 from pathlib import Path
 from utils import parse_yaml, filter_none, pretty_format_int, naive_to_aware_dt, aware_to_naive_dt, pretty_format_dt, \
-    parse_iso_dt, iso_format_dt
+    pretty_format_float, parse_iso_dt, iso_format_dt
 
 
 @pytest.fixture
@@ -77,6 +77,16 @@ def test_pretty_format_int():
     assert pretty_format_int(1000000000) == '1B'
     assert pretty_format_int(1000000000000) == '1T'
     assert pretty_format_int(1000000000000000) == '1000000000000000'
+
+
+def test_pretty_format_float():
+    with pytest.raises(AssertionError):
+        pretty_format_float(9.0)
+    assert pretty_format_float(0.123123) == '12.31'
+    assert pretty_format_float(0.996183) == '99.62'
+    assert pretty_format_float(0.056163, "%") == '5.62%'
+    assert pretty_format_float(0.999983) == '100.0'
+    assert pretty_format_float(0.000013) == '0.0'
 
 
 def test_naive_to_aware_dt(naive_dt, utc_dt, no_utc_dt):
