@@ -16,6 +16,7 @@ class Settings(pds.BaseSettings):
     description: str = "UI for merged large language models"
     author: t.Optional[str] = None
     email: t.Optional[pd.EmailStr] = None
+    repo_url: t.Optional[pd.AnyHttpUrl] = "https://github.com/naskio/mergeui"
     favicon_path: Path = PROJECT_DIR / 'static/brand/favicon.ico'
     # gradio
     disable_gradio_app: bool = False

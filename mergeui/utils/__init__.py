@@ -5,7 +5,7 @@ from numerize import numerize
 
 
 def naive_to_aware_dt(t_: dt.datetime) -> dt.datetime:
-    """Convert naive datetime to aware datetime in UTC timezone."""
+    """Force datetime to be an aware datetime in UTC timezone."""
     if t_.tzinfo is None:
         t_ = t_.replace(tzinfo=dt.timezone.utc)  # otherwise will take local timezone
     return t_.astimezone(dt.timezone.utc)
@@ -72,3 +72,10 @@ def parse_yaml(yaml_str: str) -> list[t.Union[dict, list]]:
         return [doc for doc in docs if doc is not None]
     except yaml.YAMLError:
         return []
+
+
+def custom_serializer(obj):
+    """Custom JSON serializer for dt.datetime."""
+    if isinstance(obj, dt.datetime):
+        return iso_format_dt(obj)
+    raise TypeError(f"Type {type(obj)} not serializable")

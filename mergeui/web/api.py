@@ -4,7 +4,7 @@ from core.dependencies import get_model_service
 from web.schema import DataGraph
 from utils.web import api_error, models_as_partials, graph_as_data_graph
 from web.schema import DisplayColumnType, ExcludeOptionType, SortByOptionType, ListModelsInputDTO, \
-    GetModelLineageInputDTO, GenericRO, PartialModel, BaseValidationError
+    GetModelLineageInputDTO, GenericRO, PartialModel
 
 router = fa.APIRouter()
 
@@ -19,7 +19,7 @@ def model_lineage(
         graph = model_service.get_model_lineage(inp)
         data = graph_as_data_graph(graph)
         return GenericRO[DataGraph](data=data)  # return response
-    except t.get_args(BaseValidationError) as e:
+    except (ValueError, AssertionError) as e:
         raise api_error(e)
 
 
@@ -42,5 +42,5 @@ def list_models(
                                  architecture=architecture)
         data = models_as_partials(model_service.list_models(inp), display_columns, pretty=False)
         return GenericRO(data=data)  # return response
-    except t.get_args(BaseValidationError) as e:
+    except (ValueError, AssertionError) as e:
         raise api_error(e)

@@ -103,6 +103,9 @@ def test_parse_iso_dt(utc_dt, iso_dt, naive_dt):
     assert parsed_dt != naive_dt
     assert parsed_dt.tzinfo is dt.timezone.utc
     assert parsed_dt == utc_dt
+    parsed_dt = parse_iso_dt("2023-01-13T09:45:04.386958")
+    assert parsed_dt.tzinfo is dt.timezone.utc
+    assert parsed_dt == dt.datetime(2023, 1, 13, 9, 45, 4, 386958, dt.timezone.utc)
 
 
 def test_iso_format_dt(utc_dt, iso_dt, naive_dt):
