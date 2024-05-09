@@ -3,6 +3,7 @@ from loguru import logger
 import pydantic as pd
 import pydantic_settings as pds
 from pathlib import Path
+from utils.logging import set_logger_level
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 logger.debug(f'PROJECT_DIR: {PROJECT_DIR}')
@@ -35,6 +36,10 @@ class Settings(pds.BaseSettings):
     mg_lazy: bool = False
     # db settings
     text_index_name: str = "modelDocuments"
+    # logging
+    logging_level: t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL'] = "DEBUG"
 
 
 settings = Settings()
+
+set_logger_level(settings.logging_level)
