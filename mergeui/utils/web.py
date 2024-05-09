@@ -99,7 +99,7 @@ def models_as_dataframe(
                 elif col in int_fields:
                     value = pretty_format_int(value)
                 elif col in float_fields:
-                    value = pretty_format_float(value, as_float=True)
+                    value = pretty_format_float(value, suffix='%')
                     datatype_ = 'number'
             else:
                 if col in int_fields or col in float_fields:
