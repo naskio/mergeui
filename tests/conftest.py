@@ -1,11 +1,10 @@
 import pytest
-import sys
-from loguru import logger
 from pathlib import Path
 import core
 import core.dependencies
 import repositories
 import services
+from utils.logging import set_logger_level
 
 
 @pytest.fixture(scope='session')
@@ -23,8 +22,7 @@ def setup_env(mp_session):
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_logging():
-    logger.remove()
-    logger.add(sys.stderr, level="INFO")
+    set_logger_level('ERROR')
 
 
 @pytest.fixture(scope="session")

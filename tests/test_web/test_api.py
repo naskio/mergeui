@@ -14,7 +14,7 @@ def api_client(db_conn) -> TestClient:
 def test_list_models(api_client):
     response = api_client.get("/api/models", params={
         "query": "Q-bert",
-        "columns": ["id", "name", "license", "likes"],
+        "display_columns": ["id", "name", "license", "likes"],
         "sort_by": "most likes",
     })
     assert response.status_code == 200
@@ -22,6 +22,9 @@ def test_list_models(api_client):
     assert data.get("success") is True
     assert isinstance(data.get("data"), list)
     assert len(data.get("data")) > 0
+    assert 'id' in data.get("data")[0]
+    assert 'name' in data.get("data")[0]
+    assert 'downloads' not in data.get("data")[0]
 
 
 def test_list_models__columns(api_client):
@@ -54,3 +57,6 @@ def test_model_lineage(api_client):
     node = data.get("data").get("nodes")[0]
     assert "id" in node
     assert "name" in node
+    rel = data.get("data").get("relationships")[0]
+    assert "source" in rel
+    assert "method" in rel
