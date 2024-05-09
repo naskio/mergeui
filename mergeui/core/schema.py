@@ -1,3 +1,4 @@
+import functools
 import typing as t
 import dataclasses as dc
 import pydantic as pd
@@ -41,18 +42,22 @@ class Model(gq.Node):
     indexed_at: t.Optional[dt.datetime]
 
     @classmethod
+    @functools.cache
     def fields(cls) -> list[str]:
         return get_fields_from_class(cls, include_optionals=True)
 
     @classmethod
+    @functools.cache
     def dt_fields(cls) -> list[str]:
         return get_fields_from_class(cls, dt.datetime, include_optionals=True)
 
     @classmethod
+    @functools.cache
     def int_fields(cls) -> list[str]:
         return get_fields_from_class(cls, int, include_optionals=True)
 
     @classmethod
+    @functools.cache
     def float_fields(cls) -> list[str]:
         return get_fields_from_class(cls, float, include_optionals=True)
 
@@ -61,6 +66,7 @@ class Model(gq.Node):
         return ["indexed", "indexed_at"]
 
     @classmethod
+    @functools.cache
     def display_fields(cls) -> list[str]:
         return [field for field in cls.fields() if field not in cls.hidden_fields()]
 

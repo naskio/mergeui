@@ -1,7 +1,7 @@
 import typing as t
 import fastapi as fa
 import pydantic as pd
-from utils import pretty_format_dt, pretty_format_int
+from utils import pretty_format_dt, pretty_format_int, pretty_format_float
 from core.schema import Model, Graph, BaseValidationError
 from web.schema import DataFrameDataType, DisplayColumnType, PartialModel, DataGraph
 
@@ -32,26 +32,22 @@ def models_as_partials(
 ) -> t.List[PartialModel]:
     """Convert list of Model objects to list of partial models"""
     display_columns = set(display_columns or Model.display_fields())
-    if not pretty:
-        pretty_set = set()
-    else:
-        pretty_set = set(Model.dt_fields() + Model.int_fields()) & display_columns
-    copy_set = display_columns - pretty_set
-    return list(map(lambda m: PartialModel(
-        **m.dict(include=copy_set),
+    pretty_set = display_columns if pretty else set()
+    return list(map(lambda m: {
+        **m.dict(include=display_columns),
         **{k: pretty_format_dt(getattr(m, k)) for k in Model.dt_fields() if k in pretty_set},
         **{k: pretty_format_int(getattr(m, k)) for k in Model.int_fields() if k in pretty_set},
-    ), models))
+        **{k: pretty_format_float(getattr(m, k), suffix="%") for k in Model.float_fields() if k in pretty_set},
+    }, models))
 
 
 def graph_as_data_graph(graph: Graph) -> DataGraph:
     """Convert Graph object to data graph"""
-    display_fields = Model.display_fields()
     nodes = []
     relationships = []
     nodes_data = {}
     for node in graph.nodes:  # _id, _properties, _labels
-        node_data = {k: v for k, v in node._properties.items() if k in display_fields}
+        node_data = {k: v for k, v in node._properties.items() if k in Model.display_fields()}
         nodes_data[node._id] = node_data
         nodes.append(node_data)
     for rel in graph.relationships:  # _id, _properties, _end_node_id, _start_node_id, _type
@@ -70,10 +66,6 @@ def models_as_dataframe(
         pretty: bool = True,
 ) -> DataFrameDataType:
     """Convert list of Model objects to DataFrame"""
-
-    def as_rounded_percentage(f_: t.Optional[float]) -> t.Optional[float]:
-        if f_ is not None:
-            return round(f_ * 100, 2)
 
     def markdown_link(text_: str, url_: t.Optional[str], tooltip_: t.Optional[str]) -> str:
         if not url_ and not tooltip_:
@@ -107,7 +99,7 @@ def models_as_dataframe(
                 elif col in int_fields:
                     value = pretty_format_int(value)
                 elif col in float_fields:
-                    value = as_rounded_percentage(value)
+                    value = pretty_format_float(value, as_float=True)
                     datatype_ = 'number'
             else:
                 if col in int_fields or col in float_fields:
