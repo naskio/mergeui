@@ -1,9 +1,9 @@
+import typing as t
 from gqlalchemy.query_builders.memgraph_query_builder import Order
-from utils import filter_none
 from core.base import BaseService
 import core.schema
 from repositories import GraphRepository
-from web.schema import GetModelLineageInputDTO, ListModelsInputDTO
+from utils import filter_none
 
 
 class ModelService(BaseService):
@@ -12,54 +12,85 @@ class ModelService(BaseService):
 
     def get_model_lineage(
             self,
-            inp: GetModelLineageInputDTO,
+            *,
+            model_id: str,
+            max_depth: t.Optional[int] = None,
     ) -> 'core.schema.Graph':
         return self.repository.get_sub_graph(
-            id_=inp.id,
+            id_=model_id,
             label="Model",
-            max_depth=self.repository.db_conn.settings.max_graph_depth,
+            max_depth=max_depth,
         )
 
-    def list_models(self, inp: ListModelsInputDTO) -> list['core.schema.Model']:
+    def list_models(
+            self,
+            *,
+            query: t.Optional[str] = None,
+            sort_by: t.Optional['core.schema.SortByOptionType'] = None,
+            exclude: t.Optional['core.schema.ExcludeOptionType'] = None,
+            license_: t.Optional[str] = None,
+            merge_method: t.Optional[str] = None,
+            architecture: t.Optional[str] = None,
+            base_model: t.Optional[str] = None,
+            limit: t.Optional[int] = None,
+    ) -> list['core.schema.Model']:
         # exclude feature
         label, not_label = "Model", None
-        if inp.exclude == "base models":
+        if exclude == "base models":
             label = "MergedModel"
-        if inp.exclude == "merged models":
+        if exclude == "merged models":
             not_label = "MergedModel"
         # sort feature
-        sort_key, sort_order = None, None
-        if inp.sort_by == "default":
-            sort_key, sort_order = "created_at", Order.ASC
-        elif inp.sort_by == "most likes":
-            sort_key, sort_order = "likes", Order.DESC
-        elif inp.sort_by == "most downloads":
-            sort_key, sort_order = "downloads", Order.DESC
-        elif inp.sort_by == "recently created":
-            sort_key, sort_order = "created_at", Order.DESC
-        elif inp.sort_by == "recently updated":
-            sort_key, sort_order = "updated_at", Order.DESC
+        sort_by_map = {
+            "default": ("created_at", Order.ASC),
+            "most likes": ("likes", Order.DESC),
+            "most downloads": ("downloads", Order.DESC),
+            "recently created": ("created_at", Order.DESC),
+            "recently updated": ("updated_at", Order.DESC),
+            "average score": ("average_score", Order.DESC),
+            "ARC": ("arc_score", Order.DESC),
+            "HellaSwag": ("hella_swag_score", Order.DESC),
+            "MMLU": ("mmlu_score", Order.DESC),
+            "TruthfulQA": ("truthfulqa_score", Order.DESC),
+            "Winogrande": ("winogrande_score", Order.DESC),
+            "GSM8k": ("gsm8k_score", Order.DESC),
+        }
+        if sort_by in sort_by_map:
+            sort_key, sort_order = sort_by_map[sort_by]
+        else:
+            sort_key, sort_order = sort_by_map["default"]
         return self.repository.list_models(
-            query=None if not inp.query else inp.query,
+            query=None if not query else query,
             label=label,
             not_label=not_label,
             sort_key=sort_key,
             sort_order=sort_order,
-            license_=inp.license,
-            merge_method=inp.merge_method,
-            architecture=inp.architecture,
-            base_model=inp.base_model,
-            limit=self.repository.db_conn.settings.results_limit,
+            exclude_null_on_sort_key=sort_order == Order.DESC,
+            license_=license_,
+            merge_method=merge_method,
+            architecture=architecture,
+            base_model=base_model,
+            limit=limit,
         )
 
     def get_model_id_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values("id"))
+        return filter_none(self.repository.list_property_values(key="id"))
 
     def get_license_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values("license"))
+        return filter_none(self.repository.list_property_values(key="license"))
 
     def get_merge_method_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values("merge_method"))
+        return filter_none(self.repository.list_property_values(key="merge_method"))
 
     def get_architecture_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values("architecture"))
+        return filter_none(self.repository.list_property_values(key="architecture"))
+
+    def get_default_model_id(self) -> t.Optional[str]:
+        top_models = self.repository.list_models(
+            label="MergedModel",
+            sort_key="average_score",
+            sort_order=Order.DESC,
+            exclude_null_on_sort_key=True,
+            limit=1,
+        )
+        return top_models[0].id if top_models else None

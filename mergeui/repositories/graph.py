@@ -25,7 +25,7 @@ class GraphRepository(BaseRepository):
     def __init__(self, db_conn: 'core.db.DatabaseConnection'):
         self.db_conn = db_conn
 
-    def list_property_values(self, key: str = "id", label: str = "") -> list[str]:
+    def list_property_values(self, *, key: str = "id", label: str = "") -> list[str]:
         """Get all possible values for a property including None"""
         q = (gq.match(connection=self.db_conn.db)
              .node(labels=label, variable="n")
@@ -35,6 +35,7 @@ class GraphRepository(BaseRepository):
 
     def list_nodes(
             self,
+            *,
             label: str = "",
             limit: t.Optional[int] = None,
     ) -> list[gq.Node]:
@@ -51,11 +52,13 @@ class GraphRepository(BaseRepository):
 
     def list_models(
             self,
+            *,
             query: t.Optional[str] = None,
             label: str = "Model",
             not_label: t.Optional[str] = None,
             sort_key: t.Optional[str] = None,
             sort_order: t.Optional[Order] = None,
+            exclude_null_on_sort_key: bool = False,
             license_: t.Optional[str] = None,
             merge_method: t.Optional[str] = None,
             architecture: t.Optional[str] = None,
@@ -87,6 +90,10 @@ class GraphRepository(BaseRepository):
         if architecture is not None:
             q = _get_where_clause(q, where_initiated)("n.architecture", Operator.EQUAL, literal=architecture)
             where_initiated = True
+        # exclude null on sort_key
+        if exclude_null_on_sort_key and sort_key is not None:
+            q = q.add_custom_cypher(f"{'AND' if where_initiated else 'WHERE'} n.{sort_key} IS NOT NULL")
+            where_initiated = True
         # search query
         if query is not None and query.strip() != "":
             q = (
@@ -107,6 +114,7 @@ class GraphRepository(BaseRepository):
 
     def get_sub_graph(
             self,
+            *,
             id_: str,
             label: str = "",
             relationship_type: str = "",
