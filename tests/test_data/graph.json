@@ -33,7 +33,8 @@
     },
     {
       "id": "Q-bert/MetaMath-Cybertron",
-      "url": "https://huggingface.co/Q-bert/MetaMath-Cybertron",
+      "url": null,
+      "description": "A MistralForCausalLM model trained on MetaMath.",
       "license": "apache-2.0",
       "author": "Q-bert",
       "merge_method": "slerp",
@@ -81,7 +82,7 @@
     },
     {
       "id": "fblgit/una-cybertron-7b-v2-bf16",
-      "url": "https://huggingface.co/fblgit/una-cybertron-7b-v2-bf16",
+      "url": null,
       "name": "una-cybertron-7b-v2-bf16",
       "license": "apache-2.0",
       "author": "fblgit",
