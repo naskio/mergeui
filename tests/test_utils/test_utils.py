@@ -80,13 +80,13 @@ def test_pretty_format_int():
 
 
 def test_pretty_format_float():
-    with pytest.raises(AssertionError):
-        pretty_format_float(9.0)
+    assert pretty_format_float(9.0) == '900.0'
     assert pretty_format_float(0.123123) == '12.31'
     assert pretty_format_float(0.996183) == '99.62'
     assert pretty_format_float(0.056163, "%") == '5.62%'
     assert pretty_format_float(0.999983) == '100.0'
     assert pretty_format_float(0.000013) == '0.0'
+    assert pretty_format_float(0.000013, as_float=True) == 0.0
 
 
 def test_naive_to_aware_dt(naive_dt, utc_dt, no_utc_dt):

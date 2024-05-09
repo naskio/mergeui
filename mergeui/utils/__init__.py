@@ -46,11 +46,14 @@ def pretty_format_int(n_: t.Optional[int]) -> t.Optional[str]:
         return numerize.numerize(n_)
 
 
-def pretty_format_float(f_: t.Optional[float], suffix: str = "") -> t.Optional[str]:
+def pretty_format_float(f_: t.Optional[float], suffix: str = "", as_float: bool = False) \
+        -> t.Optional[t.Union[str, float]]:
     """Format float as rounded percentage (0.24123 => 24.12)."""
     if f_ is not None:
-        assert 0.0 <= f_ <= 1.0, f"Expected float in [0-1] but got {f_}"
-        return f"{round(f_ * 100, 2)}{suffix}"
+        res = round(f_ * 100, 2)
+        if as_float:
+            return res
+        return f"{res}{suffix}"
 
 
 def titlify(s: t.Optional[str]) -> t.Optional[str]:
