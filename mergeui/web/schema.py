@@ -1,30 +1,18 @@
 import typing as t
 import pydantic as pd
-import datetime as dt
-from core.schema import Model
-from utils.types import get_fields_from_class, create_partial_type_from_class, create_literal_type
+from core.schema import Model, ExcludeOptionType, SortByOptionType, DisplayColumnType
+from utils.types import create_partial_type_from_class
 
-BaseValidationError = t.Union[pd.ValidationError, ValueError, AssertionError]
-
-MODEL_FIELDS = get_fields_from_class(Model, include_optionals=True)
-MODEL_DT_FIELDS = get_fields_from_class(Model, dt.datetime, include_optionals=True)
-MODEL_INT_FIELDS = get_fields_from_class(Model, int, include_optionals=True)
-MODEL_FLOAT_FIELDS = get_fields_from_class(Model, float, include_optionals=True)
-DISPLAY_FIELDS = [field for field in MODEL_FIELDS if field not in Model.hidden_fields()]
-
-PartialModel = create_partial_type_from_class("PartialModel", Model, total=False)
-
-DisplayColumnType = create_literal_type(DISPLAY_FIELDS)
-
-MergeMethodType = t.Literal["linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
-"breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
-ExcludeOptionType = t.Literal["base models", "merged models"]
-SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated",
-"average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
+LabelFieldType = t.Literal["id", "license", "merge_method", "architecture",
+"average_score", "arc_score", "hella_swag_score", "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
+ColorFieldType = t.Literal["license", "merge_method", "architecture",
+"average_score", "arc_score", "hella_swag_score", "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
 
 
 class GetModelLineageInputDTO(pd.BaseModel):
     id: str = pd.Field(description="Model ID", min_length=1)
+    label_field: t.Optional[LabelFieldType] = pd.Field("id", description="Field to use as label")
+    color_field: t.Optional[ColorFieldType] = pd.Field("license", description="Field to use for generating colors")
 
 
 class ListModelsInputDTO(pd.BaseModel):
@@ -49,6 +37,8 @@ class GenericRO(pd.BaseModel, t.Generic[DataT]):
     class Config:
         arbitrary_types_allowed = True
 
+
+PartialModel = create_partial_type_from_class("PartialModel", Model, total=False)
 
 DataFrameDataType = tuple[list[list], list[str], list[str]]
 

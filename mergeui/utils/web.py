@@ -1,10 +1,9 @@
 import typing as t
 import fastapi as fa
 import pydantic as pd
-from core.schema import Model, Graph
 from utils import pretty_format_dt, pretty_format_int
-from web.schema import (DISPLAY_FIELDS, MODEL_DT_FIELDS, MODEL_INT_FIELDS, MODEL_FLOAT_FIELDS,
-                        BaseValidationError, DataFrameDataType, DisplayColumnType, PartialModel, DataGraph)
+from core.schema import Model, Graph, BaseValidationError
+from web.schema import DataFrameDataType, DisplayColumnType, PartialModel, DataGraph
 
 
 def pretty_error(error: t.Union[BaseValidationError, str]) -> str:
@@ -32,26 +31,27 @@ def models_as_partials(
         pretty: bool = False,
 ) -> t.List[PartialModel]:
     """Convert list of Model objects to list of partial models"""
-    display_columns = set(display_columns or DISPLAY_FIELDS)
+    display_columns = set(display_columns or Model.display_fields())
     if not pretty:
         pretty_set = set()
     else:
-        pretty_set = set(MODEL_DT_FIELDS + MODEL_INT_FIELDS) & display_columns
+        pretty_set = set(Model.dt_fields() + Model.int_fields()) & display_columns
     copy_set = display_columns - pretty_set
     return list(map(lambda m: PartialModel(
         **m.dict(include=copy_set),
-        **{k: pretty_format_dt(getattr(m, k)) for k in MODEL_DT_FIELDS if k in pretty_set},
-        **{k: pretty_format_int(getattr(m, k)) for k in MODEL_INT_FIELDS if k in pretty_set},
+        **{k: pretty_format_dt(getattr(m, k)) for k in Model.dt_fields() if k in pretty_set},
+        **{k: pretty_format_int(getattr(m, k)) for k in Model.int_fields() if k in pretty_set},
     ), models))
 
 
 def graph_as_data_graph(graph: Graph) -> DataGraph:
     """Convert Graph object to data graph"""
+    display_fields = Model.display_fields()
     nodes = []
     relationships = []
     nodes_data = {}
     for node in graph.nodes:  # _id, _properties, _labels
-        node_data = {k: v for k, v in node._properties.items() if k in DISPLAY_FIELDS}
+        node_data = {k: v for k, v in node._properties.items() if k in display_fields}
         nodes_data[node._id] = node_data
         nodes.append(node_data)
     for rel in graph.relationships:  # _id, _properties, _end_node_id, _start_node_id, _type
@@ -75,7 +75,19 @@ def models_as_dataframe(
         if f_ is not None:
             return round(f_ * 100, 2)
 
-    display_columns = set(display_columns or DISPLAY_FIELDS)
+    def markdown_link(text_: str, url_: t.Optional[str], tooltip_: t.Optional[str]) -> str:
+        if not url_ and not tooltip_:
+            return text_
+        if not tooltip_:
+            return f'[{text_}]({url_})'
+        if not url_:
+            return f'[{text_}](# "{tooltip_}")'
+        return f'[{text_}]({url_} "{tooltip_}")'
+
+    display_columns = display_columns or Model.display_fields()
+    dt_fields = set(Model.dt_fields())
+    int_fields = set(Model.int_fields())
+    float_fields = set(Model.float_fields())
     data: list[list] = []
     headers: list[str] = []
     datatypes: list[str] = []
@@ -86,21 +98,21 @@ def models_as_dataframe(
             datatype_ = 'str'
             if pretty:
                 if col == 'id':
-                    value = f'[{model.id}]({model.url})'
+                    value = markdown_link(model.id, model.url, model.description)
                     datatype_ = 'markdown'
                 elif col == 'description':
                     datatype_ = 'markdown'
-                elif col in MODEL_DT_FIELDS:
+                elif col in dt_fields:
                     value = pretty_format_dt(value)
-                elif col in MODEL_INT_FIELDS:
+                elif col in int_fields:
                     value = pretty_format_int(value)
-                elif col in MODEL_FLOAT_FIELDS:
+                elif col in float_fields:
                     value = as_rounded_percentage(value)
                     datatype_ = 'number'
             else:
-                if col in MODEL_INT_FIELDS or col in MODEL_FLOAT_FIELDS:
+                if col in int_fields or col in float_fields:
                     datatype_ = 'number'
-                elif col in MODEL_DT_FIELDS:
+                elif col in dt_fields:
                     datatype_ = 'date'
             row.append(value)
             if len(datatypes) < len(display_columns):
@@ -112,3 +124,12 @@ def models_as_dataframe(
                     headers.append(col)
         data.append(row)
     return data, headers, datatypes
+
+
+def list_as_choices(simple: list[str]) -> list[tuple[str, str]]:
+    """[(name, value),]"""
+    return [(Model.field_label(value), value) for value in simple]
+
+
+def fix_gradio_select_value(v: t.Any, default_: t.Any = None) -> t.Any:
+    return default_ if v == [] else v
