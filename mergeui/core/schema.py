@@ -1,8 +1,10 @@
 import typing as t
 import dataclasses as dc
+import pydantic as pd
 import datetime as dt
 import gqlalchemy as gq
 from utils import titlify
+from utils.types import get_fields_from_class, create_literal_type
 
 
 @dc.dataclass
@@ -32,15 +34,35 @@ class Model(gq.Node):
     truthfulqa_score: t.Optional[float] = gq.Field(title="TruthfulQA")
     winogrande_score: t.Optional[float] = gq.Field(title="Winogrande")
     gsm8k_score: t.Optional[float] = gq.Field(title="GSM8K")
-    average_score: t.Optional[float] = gq.Field(title="average")
+    average_score: t.Optional[float]
     evaluated_at: t.Optional[dt.datetime]
     # technical
     indexed: t.Optional[bool]
     indexed_at: t.Optional[dt.datetime]
 
     @classmethod
+    def fields(cls) -> list[str]:
+        return get_fields_from_class(cls, include_optionals=True)
+
+    @classmethod
+    def dt_fields(cls) -> list[str]:
+        return get_fields_from_class(cls, dt.datetime, include_optionals=True)
+
+    @classmethod
+    def int_fields(cls) -> list[str]:
+        return get_fields_from_class(cls, int, include_optionals=True)
+
+    @classmethod
+    def float_fields(cls) -> list[str]:
+        return get_fields_from_class(cls, float, include_optionals=True)
+
+    @classmethod
     def hidden_fields(cls) -> list[str]:
         return ["indexed", "indexed_at"]
+
+    @classmethod
+    def display_fields(cls) -> list[str]:
+        return [field for field in cls.fields() if field not in cls.hidden_fields()]
 
     @classmethod
     def field_label(cls, key: str) -> str:
@@ -54,3 +76,14 @@ class MergedModel(Model):
 class DerivedFrom(gq.Relationship, type="DERIVED_FROM"):
     origin: str = gq.Field(description="Origin URL")
     method: str = gq.Field(description="Method used to extract data")
+
+
+BaseValidationError = t.Union[pd.ValidationError, ValueError, AssertionError]
+
+SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated",
+"average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
+ExcludeOptionType = t.Literal["base models", "merged models"]
+MergeMethodType = t.Literal["linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
+"breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
+
+DisplayColumnType = create_literal_type(Model.display_fields())
