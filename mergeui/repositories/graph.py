@@ -38,11 +38,12 @@ class GraphRepository(BaseRepository):
             *,
             label: str = "",
             limit: t.Optional[int] = None,
+            **kwargs,
     ) -> list[gq.Node]:
         """Get all nodes with a specific label"""
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(labels=label, variable="n")
+            .node(labels=label, variable="n", **(kwargs or {}))
             .return_("DISTINCT n")
         )
         if limit is not None:
