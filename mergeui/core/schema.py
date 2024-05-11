@@ -1,7 +1,7 @@
 import functools
 import typing as t
 import dataclasses as dc
-import pydantic as pd
+import pydantic
 import datetime as dt
 import gqlalchemy as gq
 from utils import titlify
@@ -17,7 +17,7 @@ class Graph:
 class Model(gq.Node):
     # Supported types: bool, int, float, str, list, dict, dt.datetime
     id: str  # = gq.Field(index=True, exists=True, unique=True, db=get_db_connection().db)  # manage manually
-    url: t.Optional[str]  # pd.AnyHttpUrl can't be used
+    url: t.Optional[str]  # pydantic.AnyHttpUrl can't be used
     name: t.Optional[str]
     description: t.Optional[str]
     license: t.Optional[str]
@@ -38,8 +38,11 @@ class Model(gq.Node):
     average_score: t.Optional[float]
     evaluated_at: t.Optional[dt.datetime]
     # technical
-    indexed: t.Optional[bool]
-    indexed_at: t.Optional[dt.datetime]
+    indexed: t.Optional[bool] = gq.Field(repr=False)
+    indexed_at: t.Optional[dt.datetime] = gq.Field(repr=False)
+    private: t.Optional[bool] = gq.Field(repr=False)
+    disabled: t.Optional[bool] = gq.Field(repr=False)
+    gated: t.Optional[bool] = gq.Field(repr=False)
 
     @classmethod
     @functools.cache
@@ -62,8 +65,9 @@ class Model(gq.Node):
         return get_fields_from_class(cls, float, include_optionals=True)
 
     @classmethod
+    @functools.cache
     def hidden_fields(cls) -> list[str]:
-        return ["indexed", "indexed_at"]
+        return [key for key, field in cls.__fields__.items() if not field.field_info.repr]
 
     @classmethod
     @functools.cache
@@ -84,7 +88,7 @@ class DerivedFrom(gq.Relationship, type="DERIVED_FROM"):
     method: str = gq.Field(description="Method used to extract data")
 
 
-BaseValidationError = t.Union[pd.ValidationError, ValueError, AssertionError]
+BaseValidationError = t.Union[pydantic.ValidationError, ValueError, AssertionError]
 
 SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated",
 "average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
