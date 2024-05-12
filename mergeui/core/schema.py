@@ -37,12 +37,14 @@ class Model(gq.Node):
     gsm8k_score: t.Optional[float] = gq.Field(title="GSM8K")
     average_score: t.Optional[float]
     evaluated_at: t.Optional[dt.datetime]
-    # technical
-    indexed: t.Optional[bool] = gq.Field(repr=False)
-    indexed_at: t.Optional[dt.datetime] = gq.Field(repr=False)
+    # repo status
     private: t.Optional[bool] = gq.Field(repr=False)
     disabled: t.Optional[bool] = gq.Field(repr=False)
     gated: t.Optional[bool] = gq.Field(repr=False)
+    # technical
+    indexed: t.Optional[bool] = gq.Field(repr=False)
+    indexed_at: t.Optional[dt.datetime] = gq.Field(repr=False)
+    alt_ids: t.Optional[t.List[str]] = gq.Field(default_factory=list, repr=False)
 
     @classmethod
     @functools.cache
@@ -86,6 +88,11 @@ class MergedModel(Model):
 class DerivedFrom(gq.Relationship, type="DERIVED_FROM"):
     origin: str = gq.Field(description="Origin URL")
     method: str = gq.Field(description="Method used to extract data")
+
+    @classmethod
+    @functools.cache
+    def fields(cls) -> list[str]:
+        return get_fields_from_class(cls, include_optionals=True)
 
 
 BaseValidationError = t.Union[pydantic.ValidationError, ValueError, AssertionError]
