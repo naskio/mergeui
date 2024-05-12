@@ -1,3 +1,4 @@
+import random
 from loguru import logger
 import datetime as dt
 from pathlib import Path
@@ -19,7 +20,7 @@ def create_db_connection(settings: 'core.settings.Settings') -> gq.Memgraph:
         username=settings.mg_username,
         password=settings.mg_password,
         encrypted=settings.mg_encrypted,
-        client_name=settings.mg_client_name,
+        client_name=f"{settings.mg_client_name}_{random.randint(0, 500)}",
         lazy=settings.mg_lazy,
     )
 
