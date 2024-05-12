@@ -184,6 +184,7 @@ class GraphRepository(BaseRepository):
             label: str = "",
             src_id: str,
             dst_id: str,
+            exclude_properties: t.Optional[t.List[str]] = None,
     ) -> None:
         """
         Merge node src into node dst (properties and relationships are preserved)
@@ -248,7 +249,11 @@ class GraphRepository(BaseRepository):
             .set_("dst.alt_ids", Operator.ASSIGNMENT,
                   expression=f"coalesce(dst.alt_ids, []) + coalesce(src.alt_ids, []) + '{src_id}'")
             .set_("src", Operator.INCREMENT, expression="dst")
-            .set_("dst", Operator.ASSIGNMENT, expression="src")
+        )
+        if exclude_properties:
+            q = q.remove([f"src.{key}" for key in exclude_properties])
+        q = (
+            q.set_("dst", Operator.ASSIGNMENT, expression="src")
             .delete(variable_expressions="src")
         )
         q.execute()
