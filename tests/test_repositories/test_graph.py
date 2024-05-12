@@ -71,6 +71,36 @@ def test_get_sub_graph(graph_repository):
     assert len(gr.relationships) == 0
 
 
+def test_count_nodes(graph_repository):
+    assert graph_repository.count_nodes() == 6
+
+
+@pytest.mark.run(order=-5)
+def test_create_relationship(graph_repository):
+    graph_repository.create_or_update(
+        filters=dict(id='a'),
+        create_values={'name': "A"},
+        update_values={},
+    )
+    graph_repository.create_or_update(
+        filters=dict(id='b'),
+        create_values={'name': "B"},
+        update_values={},
+    )
+    graph_repository.create_relationship(
+        from_id='a',
+        to_id='b',
+        relationship_type='DUMMY_TYPE',
+        properties={'x': 1, 'y': 2},
+    )
+    sub_graph = graph_repository.get_sub_graph(
+        start_id='a',
+    )
+    assert len(sub_graph.nodes) == 2
+    assert len(sub_graph.relationships) == 1
+    assert sub_graph.relationships[0]._type == 'DUMMY_TYPE'
+
+
 @pytest.mark.run(order=-4)
 def test_set_properties(graph_repository):
     filters = dict(id='Q-bert/MetaMath-Cybertron-Starling')
@@ -91,26 +121,6 @@ def test_remove_properties(graph_repository):
     for node in nodes:
         for key in keys:
             assert getattr(node, key) is None
-
-
-@pytest.mark.run(order=-1)
-def test_merge_nodes(graph_repository):
-    src_id = "Q-bert/MetaMath-Cybertron-Starling"
-    dst_id = "Q-bert/MetaMath-Cybertron"
-    graph_repository.merge_nodes(src_id=src_id, dst_id=dst_id)
-    assert graph_repository.list_nodes(
-        filters=dict(id=src_id)
-    ) == []
-    nodes = graph_repository.list_nodes(
-        filters=dict(id=dst_id)
-    )
-    nodes = t.cast(t.List[Model], nodes)
-    for node in nodes:
-        assert node.id == dst_id
-        assert node.author == "Q-bert"
-        assert node.likes == 6  # existing
-        assert node.average_score == 0.7124963716086201  # missing
-        assert src_id in node.alt_ids
 
 
 @pytest.mark.run(order=-2)
@@ -145,3 +155,23 @@ def test_create_or_update(graph_repository):
             assert getattr(node, key) == value
         for key, value in update_values.items():
             assert getattr(node, key, None) is None
+
+
+@pytest.mark.run(order=-1)
+def test_merge_nodes(graph_repository):
+    src_id = "Q-bert/MetaMath-Cybertron-Starling"
+    dst_id = "Q-bert/MetaMath-Cybertron"
+    graph_repository.merge_nodes(src_id=src_id, dst_id=dst_id)
+    assert graph_repository.list_nodes(
+        filters=dict(id=src_id)
+    ) == []
+    nodes = graph_repository.list_nodes(
+        filters=dict(id=dst_id)
+    )
+    nodes = t.cast(t.List[Model], nodes)
+    for node in nodes:
+        assert node.id == dst_id
+        assert node.author == "Q-bert"
+        assert node.likes == 6  # existing
+        assert node.average_score == 0.7124963716086201  # missing
+        assert src_id in node.alt_ids

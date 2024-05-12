@@ -3,6 +3,7 @@ import gqlalchemy as gq
 from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
+from gqlalchemy.utilities import CypherVariable
 import core.db
 from core.base import BaseRepository
 from core.schema import Graph
@@ -17,10 +18,12 @@ def _results_as_graph(results) -> Graph:
     return Graph(nodes=nodes, relationships=relationships)
 
 
-def _escaped(d: t.Optional[dict]) -> t.Optional[dict]:
+def _escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]]:
     """Fix backslash bug in gqlalchemy"""
+    if isinstance(d, str):
+        return d.replace("\\", "\\\\")
     if isinstance(d, dict):
-        return {k: v.replace("\\", "\\\\") if isinstance(v, str) else v for k, v in d.items()}
+        return {k: _escaped(v) if isinstance(v, str) else v for k, v in d.items()}
     return d
 
 
@@ -267,3 +270,44 @@ class GraphRepository(BaseRepository):
             .return_("n")
         )
         list(q.execute())
+
+    def create_relationship(
+            self,
+            *,
+            label: str = "",
+            from_id: str,
+            to_id: str,
+            relationship_type: str = "",
+            properties: t.Optional[dict[str, t.Any]] = None,
+    ) -> None:
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .node(label, variable="src", **_escaped({"id": from_id}))
+            .match()
+            .node(label, variable="dst", **_escaped({"id": to_id}))
+            .call("create.relationship", (
+                CypherVariable("src"),
+                relationship_type,
+                _escaped(properties) or {},
+                CypherVariable("dst"),
+            ))
+            .yield_("relationship")
+            .return_("relationship")
+        )
+        list(q.execute())
+
+    def count_nodes(
+            self,
+            *,
+            label: str = "",
+            filters: t.Optional[dict[str, t.Any]] = None,
+    ) -> int:
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .node(label, variable="n", **(_escaped(filters) or {}))
+            .return_("COUNT(DISTINCT n) as count")
+        )
+        results = list(q.execute())
+        if results:
+            return results[0].get("count", 0)
+        return 0
