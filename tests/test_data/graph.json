@@ -26,6 +26,7 @@
       "average_score": 0.7124963716086201,
       "evaluated_at": "2023-12-09T15:17:27.299396Z",
       "indexed_at": "2024-01-01T00:00:00.000Z",
+      "private": false,
       "labels": [
         "Model",
         "MergedModel"
@@ -52,6 +53,7 @@
       "average_score": null,
       "evaluated_at": "2023-12-07T21:43:38.456468Z",
       "indexed_at": "2024-01-01T00:00:00.000Z",
+      "private": false,
       "labels": [
         "Model",
         "MergedModel"
@@ -76,6 +78,7 @@
       "average_score": 0.6712789429905199,
       "evaluated_at": "2023-12-04T15:57:32.180703Z",
       "indexed_at": null,
+      "private": false,
       "labels": [
         "Model"
       ]
@@ -100,6 +103,7 @@
       "average_score": 0.6966593103545821,
       "evaluated_at": "2023-12-04T16:28:35.097444Z",
       "indexed_at": "2024-01-01T00:00:00.000Z",
+      "private": false,
       "labels": [
         "Model"
       ]
@@ -123,6 +127,7 @@
       "average_score": 0.6578313598302907,
       "evaluated_at": null,
       "indexed_at": "2024-01-01T00:00:00.000Z",
+      "private": false,
       "labels": [
         "Model"
       ]
@@ -146,6 +151,7 @@
       "average_score": 0.6088252000498336,
       "evaluated_at": "2023-12-02T13:02:14.153054Z",
       "indexed_at": "2024-01-01T00:00:00.000Z",
+      "private": false,
       "labels": [
         "Model"
       ]
