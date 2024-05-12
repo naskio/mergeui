@@ -2,13 +2,13 @@ import typing as t
 from gqlalchemy.query_builders.memgraph_query_builder import Order
 from core.base import BaseService
 import core.schema
-from repositories import GraphRepository
-from utils import filter_none
+from repositories import GraphRepository, ModelRepository
 
 
 class ModelService(BaseService):
-    def __init__(self, repository: GraphRepository):
-        self.repository = repository
+    def __init__(self, *, graph_repository: GraphRepository, model_repository: ModelRepository):
+        self.gr = graph_repository
+        self.mr = model_repository
 
     def get_model_lineage(
             self,
@@ -16,8 +16,8 @@ class ModelService(BaseService):
             model_id: str,
             max_depth: t.Optional[int] = None,
     ) -> 'core.schema.Graph':
-        return self.repository.get_sub_graph(
-            id_=model_id,
+        return self.gr.get_sub_graph(
+            start_id=model_id,
             label="Model",
             max_depth=max_depth,
         )
@@ -59,7 +59,7 @@ class ModelService(BaseService):
             sort_key, sort_order = sort_by_map[sort_by]
         else:
             sort_key, sort_order = sort_by_map["default"]
-        return self.repository.list_models(
+        return self.mr.list_models(
             query=None if not query else query,
             label=label,
             not_label=not_label,
@@ -74,19 +74,19 @@ class ModelService(BaseService):
         )
 
     def get_model_id_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values(key="id"))
+        return self.gr.list_property_values(key="id", exclude_none=True)
 
     def get_license_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values(key="license"))
+        return self.gr.list_property_values(key="license", exclude_none=True)
 
     def get_merge_method_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values(key="merge_method"))
+        return self.gr.list_property_values(key="merge_method", exclude_none=True)
 
     def get_architecture_choices(self) -> list[str]:
-        return filter_none(self.repository.list_property_values(key="architecture"))
+        return self.gr.list_property_values(key="architecture", exclude_none=True)
 
     def get_default_model_id(self) -> t.Optional[str]:
-        top_models = self.repository.list_models(
+        top_models = self.mr.list_models(
             label="MergedModel",
             sort_key="average_score",
             sort_order=Order.DESC,
@@ -94,3 +94,7 @@ class ModelService(BaseService):
             limit=1,
         )
         return top_models[0].id if top_models else None
+
+    @property
+    def db_conn(self):
+        return self.mr.db_conn or self.gr.db_conn

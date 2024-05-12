@@ -3,10 +3,12 @@ import pydantic as pd
 from core.schema import Model, ExcludeOptionType, SortByOptionType, DisplayColumnType
 from utils.types import create_partial_type_from_class
 
-LabelFieldType = t.Literal["id", "license", "merge_method", "architecture",
-"average_score", "arc_score", "hella_swag_score", "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
-ColorFieldType = t.Literal["license", "merge_method", "architecture",
-"average_score", "arc_score", "hella_swag_score", "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
+LabelFieldType = t.Literal[
+    "id", "license", "merge_method", "architecture", "average_score", "arc_score", "hella_swag_score",
+    "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
+ColorFieldType = t.Literal[
+    "license", "merge_method", "architecture", "average_score", "arc_score", "hella_swag_score",
+    "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
 
 
 class GetModelLineageInputDTO(pd.BaseModel):

@@ -2,7 +2,7 @@ import typing as t
 from loguru import logger
 import gradio as gr
 from gradio.components import Component as BaseGradioComponent
-from core.dependencies import get_model_service
+from core.dependencies import get_model_service, get_settings
 from core.schema import BaseValidationError, SortByOptionType, ExcludeOptionType, DisplayColumnType
 from web.schema import GenericRO, GetModelLineageInputDTO, ListModelsInputDTO, LabelFieldType, ColorFieldType, \
     DataFrameDataType
@@ -23,10 +23,11 @@ def get_model_lineage(
             label_field=fix_gradio_select_value(label_field),
             color_field=fix_gradio_select_value(color_field),
         )  # validate input
+        settings = get_settings()
         model_service = get_model_service()
         graph = model_service.get_model_lineage(
             model_id=inp.id,
-            max_depth=model_service.repository.db_conn.settings.max_graph_depth
+            max_depth=settings.max_graph_depth
         )
         plot = GraphPlotBuilder(
             graph=graph,
@@ -67,6 +68,7 @@ def list_models(
             merge_method=fix_gradio_select_value(merge_method),
             architecture=fix_gradio_select_value(architecture),
         )
+        settings = get_settings()
         model_service = get_model_service()
         models = model_service.list_models(
             query=inp.query,
@@ -76,7 +78,7 @@ def list_models(
             merge_method=inp.merge_method,
             architecture=inp.architecture,
             base_model=inp.base_model,
-            limit=model_service.repository.db_conn.settings.results_limit,
+            limit=settings.results_limit,
         )
         dfd: DataFrameDataType = models_as_dataframe(models, inp.display_columns, pretty=True)
         ro = GenericRO[DataFrameDataType](data=dfd)
