@@ -340,8 +340,11 @@ def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCar
         return None
     readme_str = model_card.content
     yaml_section_skipped = None
-    markdown_skip = ['#', '![', '-', '```', '`', '|', '>', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.']
+    markdown_start_skip = ['#', '![', '-', '```', '`', '|', '>', '<!--', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.',
+                           '9.', '<', '!', 'pip', '*', 'value:']
+    markdown_end_skip = [":", '-->', '/>']
     for line in readme_str.splitlines():
+        line = line.strip()
         if line.startswith("---"):
             if yaml_section_skipped is None:
                 yaml_section_skipped = False
@@ -349,11 +352,12 @@ def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCar
             elif yaml_section_skipped is False:
                 yaml_section_skipped = True
                 continue
-        if any(line.startswith(md_el) for md_el in markdown_skip):
+        if any(line.startswith(md_el) for md_el in markdown_start_skip):
             if yaml_section_skipped is not False:
                 yaml_section_skipped = True
                 continue
-        if line and yaml_section_skipped is not False and len(line.split()) > 3 and not line.endswith(":"):
+        if (line and yaml_section_skipped is not False and len(line.split()) > 3
+                and not any(line.endswith(md_el) for md_el in markdown_end_skip)):
             return line
     return None
 
