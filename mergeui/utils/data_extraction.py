@@ -459,8 +459,8 @@ def extract_mergekit_configs_from_model_card(model_card: t.Optional[hf.ModelCard
     return config_docs
 
 
-def extract_mergekit_configs_from_file(file_path: Path) -> list[dict]:
-    configs_string = file_path.read_text()
+def extract_mergekit_configs_from_file(file_path: t.Optional[Path]) -> list[dict]:
+    configs_string = file_path.read_text() if file_path else None
     config_docs = []
     if configs_string:
         config_docs = parse_yaml(configs_string)
