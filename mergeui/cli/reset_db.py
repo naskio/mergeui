@@ -2,9 +2,9 @@ from loguru import logger
 from core.dependencies import get_db_connection
 
 
-def main():
+def main(setup: bool = True):
     db_conn = get_db_connection()
-    db_conn.reset()
+    getattr(db_conn, "setup" if setup else "reset")()
     logger.success("Database reset successfully")
 
 
