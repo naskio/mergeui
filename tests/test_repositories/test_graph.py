@@ -1,4 +1,7 @@
+import pytest
+import typing as t
 import gqlalchemy as gq
+from core.schema import Model
 
 
 def test_list_property_values(graph_repository):
@@ -66,3 +69,79 @@ def test_get_sub_graph(graph_repository):
     gr = graph_repository.get_sub_graph(start_id='')
     assert len(gr.nodes) == 0
     assert len(gr.relationships) == 0
+
+
+@pytest.mark.run(order=-4)
+def test_set_properties(graph_repository):
+    filters = dict(id='Q-bert/MetaMath-Cybertron-Starling')
+    properties = {"a": "aa", "b": 18, "c": True, "d": ["d1", "d2"]}
+    graph_repository.set_properties(filters=filters, values=properties)
+    nodes = graph_repository.list_nodes(filters=filters)
+    for node in nodes:
+        for key, value in properties.items():
+            assert getattr(node, key) == value
+
+
+@pytest.mark.run(order=-3)
+def test_remove_properties(graph_repository):
+    filters = dict(id='Q-bert/MetaMath-Cybertron-Starling')
+    keys = {"license", "merge_method", "author", "likes", "downloads"}
+    graph_repository.remove_properties(filters=filters, keys=keys)
+    nodes = graph_repository.list_nodes(filters=filters)
+    for node in nodes:
+        for key in keys:
+            assert getattr(node, key) is None
+
+
+@pytest.mark.run(order=-1)
+def test_merge_nodes(graph_repository):
+    src_id = "Q-bert/MetaMath-Cybertron-Starling"
+    dst_id = "Q-bert/MetaMath-Cybertron"
+    graph_repository.merge_nodes(src_id=src_id, dst_id=dst_id)
+    assert graph_repository.list_nodes(
+        filters=dict(id=src_id)
+    ) == []
+    nodes = graph_repository.list_nodes(
+        filters=dict(id=dst_id)
+    )
+    nodes = t.cast(t.List[Model], nodes)
+    for node in nodes:
+        assert node.id == dst_id
+        assert node.author == "Q-bert"
+        assert node.likes == 6  # existing
+        assert node.average_score == 0.7124963716086201  # missing
+        assert src_id in node.alt_ids
+
+
+@pytest.mark.run(order=-2)
+def test_create_or_update(graph_repository):
+    create_values = dict(x="y")
+    update_values = dict(y=999)
+    # exist
+    filters = dict(id="Q-bert/MetaMath-Cybertron-Starling")
+    graph_repository.create_or_update(
+        filters=filters,
+        create_values=create_values,
+        update_values=update_values,
+    )
+    nodes = graph_repository.list_nodes(filters=filters)
+    assert nodes
+    for node in nodes:
+        for key, value in update_values.items():
+            assert getattr(node, key) == value
+        for key, value in create_values.items():
+            assert getattr(node, key, None) is None
+    # new
+    filters = dict(id="Q-bert/MetaMath-Cybertron-Starling-2")
+    graph_repository.create_or_update(
+        filters=filters,
+        create_values=create_values,
+        update_values=update_values,
+    )
+    nodes = graph_repository.list_nodes(filters=filters)
+    assert nodes
+    for node in nodes:
+        for key, value in create_values.items():
+            assert getattr(node, key) == value
+        for key, value in update_values.items():
+            assert getattr(node, key, None) is None

@@ -5,7 +5,7 @@ from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
 import core.db
 from core.base import BaseRepository
-from core.schema import Model, Graph
+from core.schema import Graph
 
 
 def _results_as_graph(results) -> Graph:
@@ -102,3 +102,160 @@ class GraphRepository(BaseRepository):
             results = list(q.execute())
             gr = _results_as_graph(results)
         return gr
+
+    def set_properties(
+            self,
+            *,
+            label: str = "",
+            filters: t.Optional[dict[str, t.Any]] = None,
+            create: bool = True,
+            values: dict[str, t.Any],
+    ) -> None:
+        """Set properties on matching nodes, create node it if it doesn't exist when create=True"""
+        if values:
+            q = (
+                getattr(gq, "merge" if create else "match")(connection=self.db_conn.db)
+                .node(
+                    labels=label,
+                    variable="n",
+                    **(filters or {}),
+                )
+                .set_(
+                    item="n",
+                    operator=Operator.INCREMENT,
+                    literal=values,
+                )
+            )
+            q.execute()
+
+    def remove_properties(
+            self,
+            *,
+            label: str = "",
+            filters: t.Optional[dict[str, t.Any]] = None,
+            keys: t.Iterable[str],
+    ) -> None:
+        """Remove a list of properties from a node"""
+        if keys:
+            q = (
+                gq.match(connection=self.db_conn.db)
+                .node(
+                    labels=label,
+                    variable="n",
+                    **(filters or {}),
+                )
+                .remove([f"n.{key}" for key in keys])
+            )
+            q.execute()
+
+    def merge_nodes(
+            self,
+            *,
+            label: str = "",
+            src_id: str,
+            dst_id: str,
+    ) -> None:
+        """
+        Merge node src into node dst (properties and relationships are preserved)
+        - if dst doesn't exist, just update src.id if it exists else do nothing
+        - if dst exists and src doesn't exist, do nothing
+        - if both exist:
+        - move all incoming relationships of src to dst
+        - move all outgoing relationships of src to dst
+        - add src id and src.alt_ids to dst.alt_ids
+        - then remove src
+        """
+        # check if dst node exists
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .node(label, variable="n", id=dst_id)
+            .return_("n")
+        )
+        results = list(q.execute())
+        if not results:  # dst node doesn't exist, just update src.id if it exists else do nothing
+            return self.set_properties(
+                label=label,
+                filters=dict(id=src_id),
+                values={"id": dst_id, "alt_ids": [src_id]},
+                create=False,
+            )
+        # move all incoming relationships of src to dst
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .node(label)
+            .to(variable="rel", directed=True)
+            .node(label, id=src_id)
+            .match()
+            .node(label, variable="dst", id=dst_id)
+            .call("refactor.to", "rel, dst")
+            .yield_("relationship")
+            .return_("relationship")
+        )
+        list(q.execute())
+        # move all outgoing relationships of src to dst
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .node(label, id=src_id)
+            .to(variable="rel", directed=True)
+            .node(label)
+            .match()
+            .node(label, variable="dst", id=dst_id)
+            .call("refactor.from", "rel, dst")
+            .yield_("relationship")
+            .return_("relationship")
+        )
+        list(q.execute())
+        # copy src.alt_ids to dst.alt_ids and add src.id to dst.alt_ids
+        # merge properties of src into dst if they don't exist in dst
+        # then remove src node
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .node(labels=label, id=src_id, variable="src")
+            .match()
+            .node(labels=label, id=dst_id, variable="dst")
+            .set_("dst.alt_ids", Operator.ASSIGNMENT,
+                  expression=f"coalesce(dst.alt_ids, []) + coalesce(src.alt_ids, []) + '{src_id}'")
+            .set_("src", Operator.INCREMENT, expression="dst")
+            .set_("dst", Operator.ASSIGNMENT, expression="src")
+            .delete(variable_expressions="src")
+        )
+        q.execute()
+
+    def create_or_update(
+            self,
+            *,
+            label: str = "",
+            filters: t.Optional[dict[str, t.Any]] = None,
+            create_values: dict[str, t.Any],
+            update_values: dict[str, t.Any],
+    ) -> None:
+        """Create or update a node with a specific label and filters.
+        - if exists, properties += {update_values}
+        - else, create node with properties = {filters & create_values}
+        """
+        q = (
+            gq.merge(connection=self.db_conn.db)
+            .node(
+                label,
+                variable="n",
+                **(filters or {}),
+            )
+            .add_custom_cypher(
+                " ON CREATE"
+            )
+            .set_(
+                item="n",
+                operator=Operator.INCREMENT,
+                literal=create_values,
+            )
+            .add_custom_cypher(
+                " ON MATCH"
+            )
+            .set_(
+                item="n",
+                operator=Operator.INCREMENT,
+                literal=update_values,
+            )
+            .return_("n")
+        )
+        list(q.execute())

@@ -69,7 +69,7 @@
       "created_at": "2023-11-25T17:42:15.000Z",
       "arc_score": 0.6382252559726962,
       "hella_swag_score": 0.8490340569607648,
-      "mmlu_score": 0.6466799008434705,
+      "mmlu_score": null,
       "truthfulqa_score": 0.463936332301049,
       "winogrande_score": 0.8058405682715075,
       "gsm8k_score": 0.6239575435936315,
