@@ -264,6 +264,13 @@ def extract_base_models_from_mergekit_config(mergekit_config: dict) -> set[str]:
     return set(f for f in found if isinstance(f, str))
 
 
+def extract_base_models_from_mergekit_configs(mergekit_configs: t.Optional[list[dict]]) -> set[str]:
+    base_model_set = set()
+    if mergekit_configs:
+        base_model_set = set.union(*[extract_base_models_from_mergekit_config(mc) for mc in mergekit_configs])
+    return base_model_set
+
+
 def extract_base_models_from_card_data(card_data: dict) -> set[str]:
     # https://huggingface.co/docs/hub/en/model-cards#model-card-metadata
     found = []
