@@ -1,7 +1,7 @@
 from functools import lru_cache
 import core.settings
 from core.db import DatabaseConnection
-from repositories import GraphRepository
+from repositories import GraphRepository, ModelRepository
 from services import ModelService
 
 
@@ -23,6 +23,13 @@ def get_graph_repository() -> GraphRepository:
 
 
 @lru_cache
+def get_model_repository() -> ModelRepository:
+    db_conn = get_db_connection()
+    return ModelRepository(db_conn)
+
+
+@lru_cache
 def get_model_service() -> ModelService:
-    graph_repository = get_graph_repository()
-    return ModelService(graph_repository)
+    gr = get_graph_repository()
+    mr = get_model_repository()
+    return ModelService(graph_repository=gr, model_repository=mr)

@@ -50,5 +50,10 @@ def graph_repository(db_conn) -> 'repositories.GraphRepository':
 
 
 @pytest.fixture(scope="session")
-def model_service(graph_repository) -> 'services.ModelService':
+def model_repository(db_conn) -> 'repositories.ModelRepository':
+    return core.dependencies.get_model_repository()
+
+
+@pytest.fixture(scope="session")
+def model_service() -> 'services.ModelService':
     return core.dependencies.get_model_service()
