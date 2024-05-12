@@ -1,3 +1,4 @@
+import math
 import typing as t
 import datetime as dt
 from pathlib import Path
@@ -401,6 +402,8 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     # gsm8k
     scores["gsm8k_score"] = results.get("harness|gsm8k|5", {}).get("acc")
     scores = filter_none(scores)
+    # filter NaN values
+    scores = {k: v for k, v in scores.items() if not math.isnan(v)}
     # average
     scores["average_score"] = sum(scores.values()) / len(scores)
     # evaluated_at
