@@ -7,6 +7,7 @@ from gqlalchemy.utilities import CypherVariable
 import core.db
 from core.base import BaseRepository
 from core.schema import Graph
+from utils import filter_none
 
 
 def _results_as_graph(results) -> Graph:
@@ -20,10 +21,16 @@ def _results_as_graph(results) -> Graph:
 
 def _escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]]:
     """Fix backslash bug in gqlalchemy"""
+    replacements = {
+        "\\": "\\\\",
+        "'": "\\'",
+    }
     if isinstance(d, str):
-        return d.replace("\\", "\\\\")
+        for k, v in replacements.items():
+            d = d.replace(k, v)
+        return d
     if isinstance(d, dict):
-        return {k: _escaped(v) if isinstance(v, str) else v for k, v in d.items()}
+        return {k: _escaped(v) for k, v in d.items()}
     return d
 
 
@@ -31,11 +38,18 @@ class GraphRepository(BaseRepository):
     def __init__(self, db_conn: 'core.db.DatabaseConnection'):
         self.db_conn = db_conn
 
-    def list_property_values(self, *, key: str = "id", label: str = "", exclude_none: bool = False) -> list[str]:
+    def list_property_values(
+            self,
+            *,
+            key: str = "id",
+            label: str = "",
+            exclude_none: bool = False,
+            filters: t.Optional[dict[str, t.Any]] = None
+    ) -> list[str]:
         """Get all possible values for a property including None"""
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(labels=label, variable="n")
+            .node(labels=label, variable="n", **(_escaped(filters) or {}))
         )
         if exclude_none:
             q = q.add_custom_cypher(f"WHERE n.{key} IS NOT NULL")
@@ -74,6 +88,7 @@ class GraphRepository(BaseRepository):
         """Get a sub-graph from a starting node"""
         if not start_id:
             return Graph()
+        start_id = _escaped(start_id)
         # get nodes
         q = (gq.match(connection=self.db_conn.db)
              .node(label, variable="n", id=start_id))
@@ -135,7 +150,7 @@ class GraphRepository(BaseRepository):
             q = q.set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=_escaped(new_values),
+                literal=_escaped(filter_none(new_values)),
             )
         if new_labels:
             new_labels = [new_labels] if isinstance(new_labels, str) else new_labels
@@ -180,6 +195,8 @@ class GraphRepository(BaseRepository):
         - add src id and src.alt_ids to dst.alt_ids
         - then remove src
         """
+        src_id = _escaped(src_id)
+        dst_id = _escaped(dst_id)
         # check if dst node exists
         q = (
             gq.match(connection=self.db_conn.db)
@@ -259,13 +276,13 @@ class GraphRepository(BaseRepository):
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=_escaped(create_values),
+                literal=_escaped(filter_none(create_values)),
             )
             .add_custom_cypher("ON MATCH")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=_escaped(update_values),
+                literal=_escaped(filter_none(update_values)),
             )
             .return_("n")
         )
@@ -280,19 +297,19 @@ class GraphRepository(BaseRepository):
             relationship_type: str = "",
             properties: t.Optional[dict[str, t.Any]] = None,
     ) -> None:
+        from_id = _escaped(from_id)
+        to_id = _escaped(to_id)
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(label, variable="src", **_escaped({"id": from_id}))
+            .node(label, variable="src", id=from_id)
             .match()
-            .node(label, variable="dst", **_escaped({"id": to_id}))
-            .call("create.relationship", (
-                CypherVariable("src"),
-                relationship_type,
-                _escaped(properties) or {},
-                CypherVariable("dst"),
-            ))
-            .yield_("relationship")
-            .return_("relationship")
+            .node(label, variable="dst", id=to_id)
+            .create()
+            .node(variable="src")
+            .to(relationship_type, True, variable="rel")
+            .node(variable="dst")
+            .set_("rel", Operator.INCREMENT, literal=_escaped(filter_none(properties)))
+            .return_("rel")
         )
         list(q.execute())
 
