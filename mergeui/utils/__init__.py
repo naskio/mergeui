@@ -1,6 +1,7 @@
 import typing as t
 import datetime as dt
 import yaml
+import yaml.scanner
 from numerize import numerize
 
 
@@ -80,7 +81,7 @@ def parse_yaml(yaml_str: str) -> list[t.Union[dict, list]]:
     try:
         docs = list(yaml.safe_load_all(yaml_str))  # support multi-document yaml
         return [doc for doc in docs if doc is not None]
-    except yaml.YAMLError:
+    except (yaml.YAMLError, yaml.scanner.ScannerError):
         return []
 
 

@@ -2,6 +2,7 @@ import math
 import typing as t
 import datetime as dt
 from pathlib import Path
+import yaml.scanner
 import json
 import urllib.parse
 from loguru import logger
@@ -217,7 +218,8 @@ def load_model_card(path_or_id: t.Union[hf_api.ModelInfo, Path, str]) -> t.Optio
         return model_card
     except hf_api.EntryNotFoundError:
         logger.debug(f"Model Card for {path_or_id} not found")
-        return None
+    except yaml.scanner.ScannerError:
+        logger.debug(f"Model Card for {path_or_id} is invalid")
 
 
 def hf_whoami() -> None:
@@ -351,6 +353,7 @@ def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCar
         "was merged using",
         "created using",
         "made with",
+        "was trained ",
         " is a ",
         "this model is ",
         "this is an ",
