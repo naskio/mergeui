@@ -109,23 +109,28 @@ class GraphRepository(BaseRepository):
             label: str = "",
             filters: t.Optional[dict[str, t.Any]] = None,
             create: bool = True,
-            values: dict[str, t.Any],
+            new_values: dict[str, t.Any],
+            new_labels: t.Union[t.List[str], str] = "",
     ) -> None:
         """Set properties on matching nodes, create node it if it doesn't exist when create=True"""
-        if values:
-            q = (
-                getattr(gq, "merge" if create else "match")(connection=self.db_conn.db)
-                .node(
-                    labels=label,
-                    variable="n",
-                    **(filters or {}),
-                )
-                .set_(
-                    item="n",
-                    operator=Operator.INCREMENT,
-                    literal=values,
-                )
+        q = (
+            getattr(gq, "merge" if create else "match")(connection=self.db_conn.db)
+            .node(
+                labels=label,
+                variable="n",
+                **(filters or {}),
             )
+        )
+        if new_values:
+            q = q.set_(
+                item="n",
+                operator=Operator.INCREMENT,
+                literal=new_values,
+            )
+        if new_labels:
+            new_labels = [new_labels] if isinstance(new_labels, str) else new_labels
+            q = q.add_custom_cypher(f"SET n:{':'.join(new_labels)}")
+        if new_values or new_labels:
             q.execute()
 
     def remove_properties(
@@ -176,7 +181,7 @@ class GraphRepository(BaseRepository):
             return self.set_properties(
                 label=label,
                 filters=dict(id=src_id),
-                values={"id": dst_id, "alt_ids": [src_id]},
+                new_values={"id": dst_id, "alt_ids": [src_id]},
                 create=False,
             )
         # move all incoming relationships of src to dst
@@ -240,17 +245,13 @@ class GraphRepository(BaseRepository):
                 variable="n",
                 **(filters or {}),
             )
-            .add_custom_cypher(
-                " ON CREATE"
-            )
+            .add_custom_cypher("ON CREATE")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
                 literal=create_values,
             )
-            .add_custom_cypher(
-                " ON MATCH"
-            )
+            .add_custom_cypher("ON MATCH")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,

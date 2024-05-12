@@ -75,7 +75,7 @@ def test_get_sub_graph(graph_repository):
 def test_set_properties(graph_repository):
     filters = dict(id='Q-bert/MetaMath-Cybertron-Starling')
     properties = {"a": "aa", "b": 18, "c": True, "d": ["d1", "d2"]}
-    graph_repository.set_properties(filters=filters, values=properties)
+    graph_repository.set_properties(filters=filters, new_values=properties)
     nodes = graph_repository.list_nodes(filters=filters)
     for node in nodes:
         for key, value in properties.items():
