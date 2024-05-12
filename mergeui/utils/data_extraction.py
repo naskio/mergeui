@@ -7,7 +7,7 @@ from loguru import logger
 import re
 import huggingface_hub as hf
 from huggingface_hub import hf_api
-from utils import parse_yaml, filter_none
+from utils import parse_yaml, filter_none, parse_iso_dt, aware_to_naive_dt
 from core.schema import MergeMethodType
 
 
@@ -363,7 +363,8 @@ def extract_model_url_from_model_info(model_info_or_id: t.Union[hf_api.ModelInfo
     return f"https://huggingface.co/{model_id}"
 
 
-def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) -> t.Optional[dict[str, float]]:
+def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) \
+        -> t.Optional[dict[str, t.Union[float, dt.datetime]]]:
     """
     Results:
     - Average (avg(of 6 following))
@@ -404,8 +405,8 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     scores["average_score"] = sum(scores.values()) / len(scores)
     # evaluated_at
     if evaluated_at is not None:
-        scores["evaluated_at"] = evaluated_at
-    return scores
+        scores["evaluated_at"] = aware_to_naive_dt(evaluated_at)
+    return filter_none(scores)
 
 
 # ##### Data Extraction #####
@@ -480,7 +481,7 @@ def load_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) \
             if len(parts) == 2:
                 parts = parts[1].split("T")
                 parts = f"{parts[0]}T{parts[1].replace('-', ':')}"
-                evaluated_at = dt.datetime.fromisoformat(parts)
+                evaluated_at = parse_iso_dt(parts)
                 return merged_results, evaluated_at
         if merged_results:
             return merged_results, None
