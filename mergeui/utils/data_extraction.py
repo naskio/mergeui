@@ -219,6 +219,16 @@ def load_model_card(path_or_id: t.Union[hf_api.ModelInfo, Path, str]) -> t.Optio
         return None
 
 
+def hf_whoami() -> None:
+    """log currently logged user to HF API."""
+    user = hf_api.whoami()
+    name = (user or {}).get("name")
+    if name:
+        logger.success(f"Logged In to HuggingFace as {name}")
+    else:
+        logger.warning(f"Not Logged In to HuggingFace")
+
+
 # ##### Hub #####
 
 
