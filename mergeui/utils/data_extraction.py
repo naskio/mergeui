@@ -334,31 +334,46 @@ def extract_model_name_from_model_card(model_card: t.Optional[hf.ModelCard]) -> 
     return model_card.data.model_name
 
 
+def sanitize_description(description: str) -> str:
+    description = re.sub(r'[^\w_.-]+', ' ', description)
+    description = re.sub(r'\s+', ' ', description)
+    return description.strip()
+
+
 def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCard]) -> t.Optional[str]:
-    # first line after yaml section/headings
     if not model_card or not model_card.content:
         return None
     readme_str = model_card.content
-    yaml_section_skipped = None
-    markdown_start_skip = ['#', '![', '-', '```', '`', '|', '>', '<!--', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.',
-                           '9.', '<', '!', 'pip', '*', 'value:']
-    markdown_end_skip = [":", '-->', '/>']
+    hints = [
+        " is a fine-tuned ",
+        "is a merge of",
+        " based on ",
+        "was merged using",
+        "created using",
+        "made with",
+        " is a ",
+        "this model is ",
+        "this is an ",
+        "mergekit",
+        "lazymergekit",
+        "this is the ",
+        "it is the ",
+        "merge ",
+        " using ",
+        "large language model ",
+        "language model",
+    ]
+    skip_starts = [
+        "-",
+        "<!--",
+    ]
     for line in readme_str.splitlines():
         line = line.strip()
-        if line.startswith("---"):
-            if yaml_section_skipped is None:
-                yaml_section_skipped = False
-                continue
-            elif yaml_section_skipped is False:
-                yaml_section_skipped = True
-                continue
-        if any(line.startswith(md_el) for md_el in markdown_start_skip):
-            if yaml_section_skipped is not False:
-                yaml_section_skipped = True
-                continue
-        if (line and yaml_section_skipped is not False and len(line.split()) > 3
-                and not any(line.endswith(md_el) for md_el in markdown_end_skip)):
-            return line
+        _line = line.lower()
+        if any(_line.startswith(start) for start in skip_starts):
+            continue
+        if any(hint in _line for hint in hints):
+            return sanitize_description(line)
     return None
 
 
@@ -422,7 +437,7 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     # evaluated_at
     if evaluated_at is not None:
         scores["evaluated_at"] = aware_to_naive_dt(evaluated_at)
-    return filter_none(scores)
+    return scores
 
 
 # ##### Data Extraction #####
