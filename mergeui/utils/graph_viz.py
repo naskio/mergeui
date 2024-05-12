@@ -35,6 +35,8 @@ def get_position_between(a: tuple[float, float], b: tuple[float, float], scaler:
     dx = b[0] - a[0]
     dy = b[1] - a[1]
     dist_ab = math.sqrt(dx ** 2 + dy ** 2)
+    if dist_ab == 0:
+        return a[0], a[1]
     dist_ac = scaler * dist_ab
     unit_dx = dx / dist_ab
     unit_dy = dy / dist_ab
