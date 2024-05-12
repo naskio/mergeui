@@ -81,7 +81,7 @@ def list_model_infos(
         fetch_config: bool = True,
 ) -> list[hf_api.ModelInfo]:
     """List models from HF API."""
-    logger.debug(f"Listing models...")
+    logger.debug(f"Listing models with limit={limit}...")
     models = list(hf_api.list_models(
         author=author,
         library=library,
@@ -404,7 +404,8 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
             if test_score is not None:
                 mmlu_sum += test_score
                 mmlu_count += 1
-    if mmlu_count == 57:
+    # if mmlu_count == 57:
+    if mmlu_count > 0:
         scores["mmlu_score"] = mmlu_sum / mmlu_count
     # truthfulqa
     scores["truthfulqa_score"] = results.get("harness|truthfulqa:mc|0", {}).get("mc2")
@@ -416,7 +417,8 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     # filter NaN values
     scores = {k: v for k, v in scores.items() if not math.isnan(v)}
     # average
-    scores["average_score"] = sum(scores.values()) / len(scores)
+    if len(scores) > 0:
+        scores["average_score"] = sum(scores.values()) / len(scores)
     # evaluated_at
     if evaluated_at is not None:
         scores["evaluated_at"] = aware_to_naive_dt(evaluated_at)
