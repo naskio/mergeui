@@ -10,7 +10,7 @@ logger.debug(f'PROJECT_DIR: {PROJECT_DIR}')
 
 
 class Settings(pds.BaseSettings):
-    model_config = pds.SettingsConfigDict(env_file=PROJECT_DIR / ".env", frozen=True)
+    model_config = pds.SettingsConfigDict(env_file=PROJECT_DIR / ".env", frozen=True, extra="ignore")
     project_dir: Path = PROJECT_DIR
     # UI settings
     app_name: str = "MergeUI"
@@ -34,6 +34,8 @@ class Settings(pds.BaseSettings):
     mg_encrypted: bool = False
     mg_client_name: str = "MergeUI"
     mg_lazy: bool = False
+    # redis connection
+    redis_dsn: pd.RedisDsn = "redis://localhost:6379/0"
     # db settings
     text_index_name: str = "modelDocuments"
     # logging
