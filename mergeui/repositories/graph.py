@@ -17,6 +17,13 @@ def _results_as_graph(results) -> Graph:
     return Graph(nodes=nodes, relationships=relationships)
 
 
+def _escaped(d: t.Optional[dict]) -> t.Optional[dict]:
+    """Fix backslash bug in gqlalchemy"""
+    if isinstance(d, dict):
+        return {k: v.replace("\\", "\\\\") if isinstance(v, str) else v for k, v in d.items()}
+    return d
+
+
 class GraphRepository(BaseRepository):
     def __init__(self, db_conn: 'core.db.DatabaseConnection'):
         self.db_conn = db_conn
@@ -45,7 +52,7 @@ class GraphRepository(BaseRepository):
         """Get all nodes with a specific label"""
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(labels=label, variable="n", **(filters or {}))
+            .node(labels=label, variable="n", **(_escaped(filters) or {}))
             .return_("DISTINCT n")
         )
         if limit is not None:
@@ -118,14 +125,14 @@ class GraphRepository(BaseRepository):
             .node(
                 labels=label,
                 variable="n",
-                **(filters or {}),
+                **(_escaped(filters) or {}),
             )
         )
         if new_values:
             q = q.set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=new_values,
+                literal=_escaped(new_values),
             )
         if new_labels:
             new_labels = [new_labels] if isinstance(new_labels, str) else new_labels
@@ -147,7 +154,7 @@ class GraphRepository(BaseRepository):
                 .node(
                     labels=label,
                     variable="n",
-                    **(filters or {}),
+                    **(_escaped(filters) or {}),
                 )
                 .remove([f"n.{key}" for key in keys])
             )
@@ -243,19 +250,19 @@ class GraphRepository(BaseRepository):
             .node(
                 label,
                 variable="n",
-                **(filters or {}),
+                **(_escaped(filters) or {}),
             )
             .add_custom_cypher("ON CREATE")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=create_values,
+                literal=_escaped(create_values),
             )
             .add_custom_cypher("ON MATCH")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=update_values,
+                literal=_escaped(update_values),
             )
             .return_("n")
         )
