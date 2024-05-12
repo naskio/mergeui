@@ -24,7 +24,7 @@ class Settings(pds.BaseSettings):
     load_custom_js: bool = True
     load_custom_css: bool = True
     # limit results
-    max_graph_depth: t.Optional[int] = None
+    max_graph_depth: t.Optional[int] = 3
     results_limit: t.Optional[int] = None
     # db connection
     mg_host: str = "localhost"
