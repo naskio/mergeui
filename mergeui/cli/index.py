@@ -40,7 +40,7 @@ def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = T
             break  # stop when all jobs are finished
 
 
-def index_models(limit: t.Optional[int]) -> dict:
+def index_models(limit: t.Optional[int], local_files_only: bool = False) -> dict:
     """Index All models from the HuggingFace Hub"""
     nodes_map, rels_list = {}, []
     settings: 'core.settings.Settings' = get_settings()
@@ -58,6 +58,7 @@ def index_models(limit: t.Optional[int]) -> dict:
         repo_id='open-llm-leaderboard/results',
         repo_type='dataset',
         allow_patterns="*.json",
+        local_files_only=local_files_only,
     )
     logger.debug(f"Dataset downloaded to: {results_dataset_folder}")
     # list models from the hub
@@ -114,7 +115,7 @@ def index_models(limit: t.Optional[int]) -> dict:
             }
         # check if exists, merge with existing
         if node["id"] in final_nodes_map:
-            existing_node = final_nodes_map[node["id"]]
+            existing_node = final_nodes_map.get(node["id"])
             node = {
                 **node,
                 **existing_node,
@@ -154,9 +155,10 @@ def index_models(limit: t.Optional[int]) -> dict:
 
 
 def main(
-        limit: t.Optional[str] = None,
+        limit: t.Optional[t.Union[str, int]] = None,
         reset_db: bool = True,
         save_json: bool = True,
+        local_files_only: bool = False,
 ) -> None:
     """Entry point for the index CLI command."""
     start_time = time.time()
@@ -171,7 +173,7 @@ def main(
     repository.db_conn.db.create_index(db_index__indexed)
     logger.debug(f"Indexes created")
     # indexing models
-    index_graph: dict = index_models(limit)
+    index_graph: dict = index_models(limit, local_files_only=local_files_only)
     # save to json
     if save_json:
         index_graph_path = settings.project_dir / "media" / f"index_{dt.datetime.utcnow().isoformat()}.json"
@@ -211,3 +213,7 @@ def main(
     logger.debug(f"Indexes dropped")
     end_time = time.time()
     logger.success(f"completed in {end_time - start_time:.2f} seconds")
+
+
+if __name__ == '__main__':
+    main(50, local_files_only=True)
