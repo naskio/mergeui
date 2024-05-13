@@ -1,5 +1,6 @@
 import typing as t
 import pydantic as pd
+import re
 from core.schema import Model, ExcludeOptionType, SortByOptionType, DisplayColumnType
 from utils.types import create_partial_type_from_class
 
@@ -26,6 +27,13 @@ class ListModelsInputDTO(pd.BaseModel):
     merge_method: t.Optional[str] = pd.Field(None, description="Merge strategy")
     architecture: t.Optional[str] = pd.Field(None, description="Model architecture")
     base_model: t.Optional[str] = pd.Field(None, description="Base model ID", min_length=1)
+
+    @pd.field_validator("query", mode='before')
+    def query_validator(cls, v):
+        # https://quickwit.io/docs/reference/query-language#escaping-special-characters
+        if v:
+            return re.sub(r"[^-\w]+", "?", v)
+        return v
 
 
 DataT = t.TypeVar('DataT')
