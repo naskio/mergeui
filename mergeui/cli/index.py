@@ -1,5 +1,6 @@
 import typing as t
-from pathlib import Path
+import datetime as dt
+import json
 import os
 from loguru import logger
 import time
@@ -12,32 +13,36 @@ import core.settings
 import core.db
 import repositories
 from core.dependencies import get_settings, get_graph_repository
+from utils import filter_none, custom_serializer, log_progress
 from utils.data_extraction import list_model_infos, hf_whoami
-from core.schema import Model
-from utils.jobs import index_model_by_id, merge_renamed_models
+from utils.jobs import index_model_by_id
 
 
-def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue) -> None:
+def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = True) -> None:
     """Wait for all jobs to finish with re-scheduling failed jobs."""
     while True:
         # keep waiting if any job is keep running (not finished and not failed)
         if any(not job.is_finished and not job.is_failed for job in jobs):
             logger.debug(f"Waiting for {len(jobs)} jobs execution...")
-            time.sleep(min(5, max(len(jobs) // 10, 1)))
+            time.sleep(min(5, max(len(jobs) // 10, 1)))  # sleep 1 second at least and 5 seconds at most
             continue
-        # auto requeue failed jobs
-        failed_registry = q.failed_job_registry
-        failed_job_ids = failed_registry.get_job_ids()
-        for failed_job_id in failed_job_ids:
-            failed_registry.requeue(failed_job_id)
-            logger.warning(f"Failed job {failed_job_id} requeued")
-        # stop when all jobs are finished and no failed jobs requeued
-        if not failed_job_ids:
-            break
+        if auto_reschedule:
+            # auto requeue failed jobs
+            failed_registry = q.failed_job_registry
+            failed_job_ids = failed_registry.get_job_ids()
+            for failed_job_id in failed_job_ids:
+                failed_registry.requeue(failed_job_id)
+                logger.warning(f"Failed job {failed_job_id} requeued")
+            # stop when all jobs are finished and no failed jobs requeued
+            if not failed_job_ids:
+                break
+        else:
+            break  # stop when all jobs are finished
 
 
-def index_models(limit: t.Optional[int] = None) -> None:
+def index_models(limit: t.Optional[int]) -> dict:
     """Index All models from the HuggingFace Hub"""
+    nodes_map, rels_list = {}, []
     settings: 'core.settings.Settings' = get_settings()
     r = redis.Redis(
         host=settings.redis_dsn.host,
@@ -45,10 +50,16 @@ def index_models(limit: t.Optional[int] = None) -> None:
         db=settings.redis_dsn.path.replace("/", "")
     )
     q = rq.Queue(connection=r)
-    repository: 'repositories.GraphRepository' = get_graph_repository()
-    track_model_ids = []
     # logging whoami
     hf_whoami()
+    # download dataset
+    logger.debug(f"Downloading dataset: HF_HUB_ENABLE_HF_TRANSFER={os.environ.get('HF_HUB_ENABLE_HF_TRANSFER')}...")
+    results_dataset_folder: str = hf.snapshot_download(
+        repo_id='open-llm-leaderboard/results',
+        repo_type='dataset',
+        allow_patterns="*.json",
+    )
+    logger.debug(f"Dataset downloaded to: {results_dataset_folder}")
     # list models from the hub
     model_info_list_params = dict(
         tags="merge", sort="createdAt", direction=-1,
@@ -56,17 +67,8 @@ def index_models(limit: t.Optional[int] = None) -> None:
         fetch_config=False, card_data=False, full=False
     )
     model_info_list: list[hf_api.ModelInfo] = list_model_infos(**model_info_list_params)
-    model_ids = [mi.id for mi in model_info_list]
-    # download dataset
-    logger.debug(f"Downloading dataset: HF_HUB_ENABLE_HF_TRANSFER={os.environ.get('HF_HUB_ENABLE_HF_TRANSFER')}...")
-    results_dataset_folder = Path(hf.snapshot_download(
-        repo_id='open-llm-leaderboard/results',
-        repo_type='dataset',
-        allow_patterns="*.json",
-    ))
-    logger.debug(f"Dataset downloaded to: {results_dataset_folder}")
+    model_ids: set[str] = set([mi.id for mi in model_info_list])
     while model_ids:
-        track_model_ids += model_ids
         logger.debug(f"Indexing {len(model_ids)} models...")
         start_time = time.time()
         # # schedule jobs
@@ -82,42 +84,84 @@ def index_models(limit: t.Optional[int] = None) -> None:
         ])
         # wait for jobs
         wait_for_jobs(jobs, q)
+        # get results
+        for job in jobs:
+            _got: tuple[dict, list] = job.return_value()
+            new_node, new_rels = _got
+            assert new_node.get("id") not in nodes_map, f"Model {new_node.get('id')} already indexed"
+            nodes_map[new_node.get("id")] = new_node
+            rels_list.extend(new_rels)
         # logging
         end_time = time.time()
         logger.debug(f"Iteration completed in {end_time - start_time:.2f} seconds")
         # prepare next iteration
-        models = repository.list_nodes(label="Model", filters=dict(indexed=False))
-        models = t.cast(list[Model], models)
-        model_ids = [model.id for model in models]
-    # handling all moved models
-    models = repository.list_nodes(label="Model", filters=dict(indexed=True))
-    models = t.cast(list[Model], models)
-    moved_pairs = []
-    for model in models:
-        new_model_id = model._properties.get("new_id")
-        if new_model_id and model.id != new_model_id:
-            logger.warning(f"Model {model.id} has been moved to {new_model_id}")
-            moved_pairs.append((model.id, new_model_id))
-    # schedule moved jobs
-    jobs = q.enqueue_many([
-        q.prepare_data(
-            merge_renamed_models,
-            [model_id, new_model_id],
-            timeout=60 * 2,  # 2 minutes
-            result_ttl=60 * 60 * 2,  # 2 hours
-            failure_ttl=60 * 60 * 2,  # 2 hours
-            job_id=f"merge_renamed_models__{model_id.replace('/', '__')}__to__{new_model_id.replace('/', '__')}"
-        ) for model_id, new_model_id in moved_pairs
-    ])
-    # wait for jobs
-    wait_for_jobs(jobs, q)
+        model_ids = set(rel["target"] for rel in rels_list) - set(nodes_map.keys())
+    # handling all renamed models
+    rename_map = {}  # old_id -> new_id
+    final_nodes_map = {}
+    for node in nodes_map.values():
+        old_id = node.get("id")
+        new_id = node.get("new_id")
+        # check if renamed
+        if new_id and old_id != new_id:
+            logger.warning(f"Model {old_id} has been moved to {new_id}")
+            rename_map[old_id] = new_id
+            # renaming
+            node = {
+                **node,
+                "id": new_id,
+                "alt_ids": [old_id],
+            }
+        # check if exists, merge with existing
+        if node["id"] in final_nodes_map:
+            existing_node = final_nodes_map[node["id"]]
+            node = {
+                **node,
+                **existing_node,
+                "alt_ids": list(set(existing_node.get("alt_ids", [] + node.get("alt_ids", [])))),
+            }
+        final_nodes_map[node["id"]] = filter_none({
+            **node,
+            "new_id": None,
+            "indexed": None,
+        })
+    # fixing relationships
+    existing_rels = set()
+    final_rels_list = []
+    for rel in rels_list:
+        source = rename_map.get(rel["source"], rel["source"])
+        target = rename_map.get(rel["target"], rel["target"])
+        rel_unique_key = source, target, rel["method"], rel["origin"]
+        if rel_unique_key in existing_rels:
+            continue
+        final_rels_list.append(filter_none({
+            **rel,
+            "source": source,
+            "target": target,
+        }))
+        existing_rels.add(rel_unique_key)
     # logging
-    logger.info(f"Indexed {len(models)} models, {len(moved_pairs)} moved")
+    logger.success(f"=> {len(final_nodes_map)} models ({len(rename_map)} moved), {len(final_rels_list)} relationships")
+    # return index graph
+    return {
+        "directed": True,
+        "multigraph": True,
+        "nodes_count": len(final_nodes_map),
+        "relationships_count": len(final_rels_list),
+        "nodes": list(final_nodes_map.values()),
+        "relationships": final_rels_list,
+    }
 
 
-def main(limit: t.Optional[str] = None, reset_db: bool = True) -> None:
+def main(
+        limit: t.Optional[str] = None,
+        reset_db: bool = True,
+        save_json: bool = True,
+) -> None:
     """Entry point for the index CLI command."""
     start_time = time.time()
+    limit = int(limit) if limit is not None else limit
+    settings = get_settings()
     repository: 'repositories.GraphRepository' = get_graph_repository()
     if reset_db:
         repository.db_conn.setup(reset_if_not_empty=True)
@@ -127,13 +171,43 @@ def main(limit: t.Optional[str] = None, reset_db: bool = True) -> None:
     repository.db_conn.db.create_index(db_index__indexed)
     logger.debug(f"Indexes created")
     # indexing models
-    index_models(int(limit) if limit is not None else limit)
+    index_graph: dict = index_models(limit)
+    # save to json
+    if save_json:
+        index_graph_path = settings.project_dir / "media" / f"index_{dt.datetime.utcnow().isoformat()}.json"
+        logger.debug(f"Saving index to json file...")
+        index_graph_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(index_graph_path, "w") as f:
+            json.dump(index_graph, f, indent=4, default=custom_serializer)
+        logger.success(f"Index saved to file: {index_graph_path}")
+    # import to Database
+    logger.debug(f"Importing nodes to database: {index_graph.get('nodes_count')}")
+    for ind, node in enumerate(index_graph["nodes"]):
+        repository.set_properties(
+            label="Model",
+            filters=dict(id=node["id"]),
+            new_values={k: v for k, v in node.items() if k not in {"id", "labels"}},
+            new_labels=node["labels"],
+            create=True,
+        )
+        log_progress(ind, index_graph["nodes_count"], step=5)
+    logger.debug(f"Importing relationships to database: {index_graph.get('relationships_count')}")
+    for ind, rel in enumerate(index_graph["relationships"]):
+        repository.create_relationship(
+            label="Model",
+            from_id=rel["source"],
+            to_id=rel["target"],
+            relationship_type=rel["type"],
+            properties={k: v for k, v in rel.items() if k not in {"source", "target", "type"}},
+        )
+        log_progress(ind, index_graph["relationships_count"], step=5)
+    logger.success(f"Imported {index_graph['nodes_count']} nodes and {index_graph['relationships_count']} rels")
     # teardown
     logger.debug(f"Removing extra properties...")
-    repository.remove_properties(label="Model", filters=dict(indexed=True), keys={"indexed", "new_id"})
+    repository.remove_properties(label="Model", keys={"indexed", "new_id"})
     logger.debug(f"Extra properties removed")
     logger.debug(f"Dropping indexes...")
     repository.db_conn.db.drop_index(db_index__indexed)
     logger.debug(f"Indexes dropped")
     end_time = time.time()
-    logger.info(f"completed in {end_time - start_time:.2f} seconds")
+    logger.success(f"completed in {end_time - start_time:.2f} seconds")
