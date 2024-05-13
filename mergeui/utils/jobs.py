@@ -5,10 +5,7 @@ from pathlib import Path
 import time
 import huggingface_hub as hf
 from huggingface_hub import hf_api
-import repositories
-from core.dependencies import get_graph_repository
-from core.schema import DerivedFrom
-from utils import aware_to_naive_dt
+from utils import aware_to_naive_dt, filter_none
 from utils.data_extraction import get_model_info, load_model_card, download_mergekit_config, get_data_origin, \
     extract_benchmark_results_from_dataset, extract_model_url_from_model_info, extract_model_name_from_model_card, \
     extract_model_description_from_model_card, extract_license_from_tags, extract_license_from_model_card, \
@@ -18,29 +15,27 @@ from utils.data_extraction import get_model_info, load_model_card, download_merg
     extract_mergekit_configs_from_file
 
 
-def index_model_by_id(model_id: str, results_dataset_folder: Path) -> None:
-    """Index one model by its ID."""
+def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict, list]:
+    """Index one model by its ID. Return the node data and relationships data"""
     start_time = time.time()
-    repository: 'repositories.GraphRepository' = get_graph_repository()
+    results_dataset_folder = Path(results_dataset_folder)
     _got: tuple[t.Optional[hf_api.ModelInfo], t.Optional[str]] = get_model_info(
         model_id=model_id,
         include_gated=True,
         include_moved=True,
     )
     model_info, model_info_origin = _got
-    if model_info is None:  # private/local model
+    # private/local model
+    if model_info is None:
         logger.warning(f"Model {model_id} not found in HF")
-        # create/update node in DB
-        return repository.set_properties(
-            label="Model",
-            filters=dict(id=model_id),
-            new_values=dict(
-                indexed=True,
-                indexed_at=aware_to_naive_dt(dt.datetime.utcnow()),
-                private=True,
-            ),
-            create=True,
-        )
+        return filter_none({
+            "id": model_id,
+            "indexed": True,
+            "indexed_at": aware_to_naive_dt(dt.datetime.utcnow()),
+            "private": True,
+            "labels": ["Model"],
+        }), []
+    # public model
     model_card: t.Optional[hf.ModelCard] = load_model_card(model_info.id)
     model_card_origin = get_data_origin(model_id=model_info.id, filename_or_path="README.md")
     _got: tuple[t.Optional[Path], t.Optional[str]] = download_mergekit_config(model_info.id, model_info.siblings)
@@ -53,6 +48,7 @@ def index_model_by_id(model_id: str, results_dataset_folder: Path) -> None:
     )
     description: t.Optional[str] = extract_model_description_from_model_card(model_card)
     node_data = {
+        "id": model_id,
         "new_id": model_info.id if model_info.id != model_id else None,
         "url": extract_model_url_from_model_info(model_info),
         "name": extract_model_name_from_model_card(model_card),
@@ -71,8 +67,8 @@ def index_model_by_id(model_id: str, results_dataset_folder: Path) -> None:
         "gated": model_info.gated in ["auto", "manual"],
         "indexed": True,
         "indexed_at": aware_to_naive_dt(dt.datetime.utcnow()),
+        "labels": ["Model"],
     }
-    extra_labels = []
     node_relationships = []
     base_model_extractors = {
         "tags": {
@@ -90,7 +86,7 @@ def index_model_by_id(model_id: str, results_dataset_folder: Path) -> None:
             "args": [mergekit_configs_from_file],
             "origin": mergekit_config_origin,
         },
-        "README.md (yaml)": {
+        "modelCard.yaml": {
             "func": extract_base_models_from_mergekit_configs,
             "args": [mergekit_configs_from_model_card],
             "origin": model_card_origin,
@@ -102,7 +98,15 @@ def index_model_by_id(model_id: str, results_dataset_folder: Path) -> None:
         base_model_set: set = _func(*_args)
         for base_model in base_model_set:
             node_relationships.append(
-                dict(type="DERIVED_FROM", method=extractor_method, origin=_origin, source=model_id, target=base_model)
+                filter_none(
+                    dict(
+                        type="DERIVED_FROM",
+                        method=extractor_method,
+                        origin=_origin,
+                        source=model_id,
+                        target=base_model,
+                    )
+                )
             )
     # extract merge_method
     for mergekit_config in (mergekit_configs_from_file + mergekit_configs_from_model_card):
@@ -112,43 +116,8 @@ def index_model_by_id(model_id: str, results_dataset_folder: Path) -> None:
             break
     # add extra labels if needed
     if node_relationships or node_data.get("merge_method"):
-        extra_labels.append("MergedModel")
-    # create/update node in DB
-    repository.set_properties(
-        label="Model",
-        filters=dict(id=model_id),
-        new_values=node_data,
-        create=True,
-        new_labels=extra_labels,
-    )
-    # insert related nodes and relationships in DB
-    for rel_data in node_relationships:
-        # add base_model to DB if not exists
-        repository.create_or_update(
-            label="Model",
-            filters=dict(id=rel_data["target"]),
-            create_values=dict(indexed=False),
-            update_values={},
-        )
-        # add relationships to DB
-        repository.create_relationship(
-            label="Model",
-            from_id=rel_data["source"],
-            to_id=rel_data["target"],
-            relationship_type=rel_data["type"],
-            properties={k: v for k, v in rel_data.items() if k in DerivedFrom.fields()},
-        )
+        node_data["labels"].append("MergedModel")
     # logging
     end_time = time.time()
     logger.info(f"Job={model_id} completed in {end_time - start_time:.2f} seconds")
-
-
-def merge_renamed_models(model_id: str, new_model_id: t.Optional[str]) -> None:
-    """Merge two models."""
-    repository: 'repositories.GraphRepository' = get_graph_repository()
-    if model_id != new_model_id and new_model_id:
-        repository.merge_nodes(
-            label="Model",
-            src_id=model_id,
-            dst_id=new_model_id,
-        )
+    return filter_none(node_data), node_relationships
