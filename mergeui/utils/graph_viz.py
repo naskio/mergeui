@@ -582,7 +582,7 @@ class GraphPlotBuilder:
     def _add_text_watermark(self):
         w = self.p.x_range.end - self.p.x_range.start
         h = self.p.y_range.end - self.p.y_range.start
-        scaler = 0.05
+        scaler = 0.1
         self.p.add_layout(Label(
             x=self.p.x_range.start + w * scaler,
             y=self.p.y_range.start + h * scaler,
@@ -593,7 +593,7 @@ class GraphPlotBuilder:
             text_align="left",
             text_baseline="bottom",
             text_font_style="normal",
-            text_alpha=0.8,
+            text_alpha=0.5,
             # anchor="center", # v3.4.1
             # padding=10, # v3.4.1
             # border_radius=5, # v3.4.1
