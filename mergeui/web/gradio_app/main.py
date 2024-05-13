@@ -87,7 +87,8 @@ with gr.Blocks(theme=custom_theme, title=settings.app_name, css=custom_css, js=c
                     lineage_in.change(
                         fn=get_model_lineage,
                         inputs=lineage_inputs,
-                        outputs=[lineage_out, lineage_message]
+                        outputs=[lineage_out, lineage_message],
+                        trigger_mode="once",
                     )
                 gr.Markdown("""
                 > **Hints**
@@ -185,7 +186,8 @@ with gr.Blocks(theme=custom_theme, title=settings.app_name, css=custom_css, js=c
                     discover_in.change(
                         fn=list_models,
                         inputs=discover_inputs,
-                        outputs=[discover_out, discover_message]
+                        outputs=[discover_out, discover_message],
+                        trigger_mode="once",
                     )
                 gr.Markdown("""
                 > **Hints**
