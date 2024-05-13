@@ -73,8 +73,8 @@ class ModelService(BaseService):
             limit=limit,
         )
 
-    def get_model_id_choices(self) -> list[str]:
-        return self.gr.list_property_values(key="id", exclude_none=True, filters=dict(private=False))
+    def get_model_id_choices(self, private: t.Optional[bool] = None) -> list[str]:
+        return self.gr.list_property_values(key="id", exclude_none=True, filters=dict(private=private))
 
     def get_license_choices(self) -> list[str]:
         return self.gr.list_property_values(key="license", exclude_none=True)

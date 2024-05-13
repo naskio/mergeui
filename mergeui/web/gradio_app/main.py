@@ -11,7 +11,7 @@ from utils.web import list_as_choices
 settings = get_settings()
 model_service = get_model_service()
 
-MODEL_ID_CHOICES = model_service.get_model_id_choices()
+MODEL_ID_CHOICES = model_service.get_model_id_choices(private=False)
 SORT_BY_CHOICES = list_as_choices(get_literal_type_options(SortByOptionType))
 DISPLAY_COLUMN_CHOICES = list_as_choices(get_literal_type_options(DisplayColumnType))
 EXCLUDE_CHOICES = list_as_choices(get_literal_type_options(ExcludeOptionType))

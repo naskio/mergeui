@@ -251,7 +251,7 @@ def test_load_model_card__gated():
     card = load_model_card(model_id)
     assert card is not None
     assert card.data is not None
-    assert card.data.license == 'other'
+    assert card.data.license == 'llama3'
 
 
 def test_load_model_card__moved():
