@@ -3,8 +3,7 @@ import gqlalchemy as gq
 from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
-from gqlalchemy.utilities import CypherVariable
-import core.db
+from core.db import DatabaseConnection, execute_query
 from core.base import BaseRepository
 from core.schema import Graph
 from utils import filter_none
@@ -35,7 +34,7 @@ def _escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]
 
 
 class GraphRepository(BaseRepository):
-    def __init__(self, db_conn: 'core.db.DatabaseConnection'):
+    def __init__(self, db_conn: 'DatabaseConnection'):
         self.db_conn = db_conn
 
     def list_property_values(
@@ -57,7 +56,7 @@ class GraphRepository(BaseRepository):
             q.return_(f"DISTINCT n.{key} as v")
             .order_by(properties=[("v", Order.ASC)])
         )
-        return list(map(lambda x: x.get("v"), q.execute()))
+        return list(map(lambda x: x.get("v"), execute_query(q)))
 
     def list_nodes(
             self,
@@ -74,7 +73,7 @@ class GraphRepository(BaseRepository):
         )
         if limit is not None:
             q = q.limit(limit)
-        result = list(map(lambda x: x.get("n"), q.execute()))
+        result = list(map(lambda x: x.get("n"), execute_query(q)))
         return t.cast(list[gq.Node], result)
 
     def get_sub_graph(
@@ -116,7 +115,7 @@ class GraphRepository(BaseRepository):
             .with_("COLLECT(DISTINCT rel) AS distinct_rels, distinct_nodes")
             .return_("distinct_nodes AS nodes, distinct_rels as relationships")
         )
-        results = list(q.execute())
+        results = execute_query(q)
         gr = _results_as_graph(results)
         if not gr.nodes:  # handle isolated node or empty graph
             q = (
@@ -124,7 +123,7 @@ class GraphRepository(BaseRepository):
                 .node(label, variable="n", id=start_id)
                 .return_("COLLECT(DISTINCT n) AS nodes, [] AS relationships")
             )
-            results = list(q.execute())
+            results = execute_query(q)
             gr = _results_as_graph(results)
         return gr
 
@@ -156,7 +155,7 @@ class GraphRepository(BaseRepository):
             new_labels = [new_labels] if isinstance(new_labels, str) else new_labels
             q = q.add_custom_cypher(f"SET n:{':'.join(new_labels)}")
         if new_values or new_labels:
-            q.execute()
+            execute_query(q)
 
     def remove_properties(
             self,
@@ -176,7 +175,7 @@ class GraphRepository(BaseRepository):
                 )
                 .remove([f"n.{key}" for key in keys])
             )
-            q.execute()
+            execute_query(q)
 
     def merge_nodes(
             self,
@@ -204,7 +203,7 @@ class GraphRepository(BaseRepository):
             .node(label, variable="n", id=dst_id)
             .return_("n")
         )
-        results = list(q.execute())
+        results = execute_query(q)
         if not results:  # dst node doesn't exist, just update src.id if it exists else do nothing
             return self.set_properties(
                 label=label,
@@ -224,7 +223,7 @@ class GraphRepository(BaseRepository):
             .yield_("relationship")
             .return_("relationship")
         )
-        list(q.execute())
+        execute_query(q)
         # move all outgoing relationships of src to dst
         q = (
             gq.match(connection=self.db_conn.db)
@@ -237,7 +236,7 @@ class GraphRepository(BaseRepository):
             .yield_("relationship")
             .return_("relationship")
         )
-        list(q.execute())
+        execute_query(q)
         # copy src.alt_ids to dst.alt_ids and add src.id to dst.alt_ids
         # merge properties of src into dst if they don't exist in dst
         # then remove src node
@@ -256,7 +255,7 @@ class GraphRepository(BaseRepository):
             q.set_("dst", Operator.ASSIGNMENT, expression="src")
             .delete(variable_expressions="src")
         )
-        q.execute()
+        execute_query(q)
 
     def create_or_update(
             self,
@@ -291,7 +290,7 @@ class GraphRepository(BaseRepository):
             )
             .return_("n")
         )
-        list(q.execute())
+        execute_query(q)
 
     def create_relationship(
             self,
@@ -316,7 +315,7 @@ class GraphRepository(BaseRepository):
             .set_("rel", Operator.INCREMENT, literal=_escaped(filter_none(properties)))
             .return_("rel")
         )
-        list(q.execute())
+        execute_query(q)
 
     def count_nodes(
             self,
@@ -329,7 +328,7 @@ class GraphRepository(BaseRepository):
             .node(label, variable="n", **(_escaped(filters) or {}))
             .return_("COUNT(DISTINCT n) as count")
         )
-        results = list(q.execute())
+        results = execute_query(q)
         if results:
             return results[0].get("count", 0)
         return 0

@@ -2,7 +2,7 @@ import typing as t
 import gqlalchemy as gq
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
-import core.db
+from core.db import DatabaseConnection, execute_query
 from core.base import BaseRepository
 from core.schema import Model
 
@@ -12,7 +12,7 @@ def _get_where_clause(q, where_initiated: bool):
 
 
 class ModelRepository(BaseRepository):
-    def __init__(self, db_conn: 'core.db.DatabaseConnection'):
+    def __init__(self, db_conn: 'DatabaseConnection'):
         self.db_conn = db_conn
 
     def list_models(
@@ -74,5 +74,5 @@ class ModelRepository(BaseRepository):
             q = q.order_by(properties=[(f"n.{sort_key}", sort_order or Order.ASC)])
         if limit is not None:
             q = q.limit(limit)
-        result = list(map(lambda x: x.get("n"), q.execute()))
+        result = list(map(lambda x: x.get("n"), execute_query(q)))
         return t.cast(list[Model], result)

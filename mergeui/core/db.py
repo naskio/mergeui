@@ -1,9 +1,11 @@
 import random
+import typing as t
 from loguru import logger
 import datetime as dt
 from pathlib import Path
 import gqlalchemy as gq
 import networkx as nx
+import time
 import core.settings
 from core.schema import Model
 from core.base import BaseDatabaseConnection
@@ -23,6 +25,47 @@ def create_db_connection(settings: 'core.settings.Settings') -> gq.Memgraph:
         client_name=f"{settings.mg_client_name}_{random.randint(0, 500)}",
         lazy=settings.mg_lazy,
     )
+
+
+def auto_retry_query(*, max_tries: t.Optional[int] = 10, delay: t.Optional[float] = None):
+    """Decorator factory for auto-retrying query execution on DatabaseError."""
+
+    def decorator(func):
+        """Decorator for auto-retrying query execution on DatabaseError."""
+
+        def wrapper(*args, **kwargs):
+            _max_tries = max_tries
+            _tries = 0
+            _delay = delay
+            while _tries < _max_tries:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    _e_str = e.__repr__()
+                    logger.debug(f"Checking auto retry query for {_e_str}")
+                    if any(sub_str in _e_str for sub_str in
+                           ["Cannot resolve conflicting transactions", "failed to receive chunk size",
+                            "GQLAlchemyWaitForConnectionError"]):
+                        _tries += 1
+                        if _max_tries is None or _tries < _max_tries:
+                            logger.warning(f"Retrying query execution. Try {_tries} of {_max_tries}...")
+                            if delay is None:
+                                _delay = min(_tries / 10.0, 10.0)  # max 10s delay
+                            time.sleep(_delay)
+                    else:
+                        raise  # Re-raise if it's a different DatabaseError
+
+        return wrapper
+
+    return decorator
+
+
+@auto_retry_query()
+def execute_query(q):
+    result = q.execute()
+    if isinstance(result, t.Iterator):
+        result = list(result)
+    return result
 
 
 class DatabaseConnection(BaseDatabaseConnection):
