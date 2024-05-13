@@ -5,7 +5,7 @@ from pathlib import Path
 import time
 import huggingface_hub as hf
 from huggingface_hub import hf_api
-from utils import aware_to_naive_dt, filter_none
+from utils import aware_to_naive_dt, filter_none, format_duration
 from utils.data_extraction import get_model_info, load_model_card, download_mergekit_config, get_data_origin, \
     extract_benchmark_results_from_dataset, extract_model_url_from_model_info, extract_model_name_from_model_card, \
     extract_model_description_from_model_card, extract_license_from_tags, extract_license_from_model_card, \
@@ -28,6 +28,8 @@ def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict,
     # private/local model
     if model_info is None:
         logger.warning(f"Model {model_id} not found in HF")
+        end_time = time.time()
+        logger.success(f"Job={model_id} completed in {format_duration(start_time, end_time)}")
         return filter_none({
             "id": model_id,
             "indexed": True,
@@ -119,5 +121,5 @@ def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict,
         node_data["labels"].append("MergedModel")
     # logging
     end_time = time.time()
-    logger.info(f"Job={model_id} completed in {end_time - start_time:.2f} seconds")
+    logger.success(f"Job={model_id} completed in {format_duration(start_time, end_time)}")
     return filter_none(node_data), node_relationships

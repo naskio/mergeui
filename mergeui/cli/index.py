@@ -31,8 +31,11 @@ def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = T
             failed_registry = q.failed_job_registry
             failed_job_ids = failed_registry.get_job_ids()
             for failed_job_id in failed_job_ids:
-                failed_registry.requeue(failed_job_id)
-                logger.warning(f"Failed job {failed_job_id} requeued")
+                failed_job = q.fetch_job(failed_job_id)
+                logger.warning(f"Requeuing failed job {failed_job.id}...\n"
+                               f"{failed_job.func_name}(args={failed_job.args}, kwargs={failed_job.kwargs})\n"
+                               f"exc_string: {failed_job.latest_result().exc_string}")
+                failed_registry.requeue(failed_job.id)
             # stop when all jobs are finished and no failed jobs requeued
             if not failed_job_ids:
                 break
@@ -94,7 +97,7 @@ def index_models(limit: t.Optional[int], local_files_only: bool = False) -> dict
             rels_list.extend(new_rels)
         # logging
         end_time = time.time()
-        logger.debug(f"Iteration completed in {end_time - start_time:.2f} seconds")
+        logger.debug(f"Iteration completed in {format_duration(start_time, end_time)}")
         # prepare next iteration
         model_ids = set(rel["target"] for rel in rels_list) - set(nodes_map.keys())
     # handling all renamed models
@@ -183,7 +186,7 @@ def main(
             json.dump(index_graph, f, indent=4, default=custom_serializer)
         logger.success(f"Index saved to file: {index_graph_path}")
     # import to Database
-    logger.debug(f"Importing nodes to database: {index_graph.get('nodes_count')}")
+    logger.debug(f"Importing {index_graph.get('nodes_count')} nodes to database...")
     for ind, node in enumerate(index_graph["nodes"]):
         repository.set_properties(
             label="Model",
@@ -193,7 +196,7 @@ def main(
             create=True,
         )
         log_progress(ind, index_graph["nodes_count"], step=5)
-    logger.debug(f"Importing relationships to database: {index_graph.get('relationships_count')}")
+    logger.debug(f"Importing {index_graph.get('relationships_count')} relationships to database...")
     for ind, rel in enumerate(index_graph["relationships"]):
         repository.create_relationship(
             label="Model",
@@ -212,8 +215,8 @@ def main(
     repository.db_conn.db.drop_index(db_index__indexed)
     logger.debug(f"Indexes dropped")
     end_time = time.time()
-    logger.success(f"completed in {end_time - start_time:.2f} seconds")
+    logger.success(f"completed in {format_duration(start_time, end_time)}")
 
 
 if __name__ == '__main__':
-    main(50, local_files_only=True)
+    main(10, local_files_only=True)
