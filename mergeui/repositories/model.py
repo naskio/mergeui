@@ -5,6 +5,7 @@ from gqlalchemy.query_builders.memgraph_query_builder import Order
 from core.db import DatabaseConnection, execute_query
 from core.base import BaseRepository
 from core.schema import Model
+from utils import escaped
 
 
 def _get_where_clause(q, where_initiated: bool):
@@ -31,6 +32,8 @@ class ModelRepository(BaseRepository):
             limit: t.Optional[int] = None,
     ) -> list[Model]:
         """Get all models with optional filters"""
+        query = escaped(query)
+        base_model = escaped(base_model)
         q = gq.match(connection=self.db_conn.db)
         where_initiated = False
         # label

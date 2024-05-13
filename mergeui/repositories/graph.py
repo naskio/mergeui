@@ -6,7 +6,7 @@ from gqlalchemy.query_builders.memgraph_query_builder import Order
 from core.db import DatabaseConnection, execute_query
 from core.base import BaseRepository
 from core.schema import Graph
-from utils import filter_none
+from utils import filter_none, escaped
 
 
 def _results_as_graph(results) -> Graph:
@@ -16,21 +16,6 @@ def _results_as_graph(results) -> Graph:
     nodes = list(map(_convert_memgraph_value, results[0]["nodes"]))
     relationships = list(map(_convert_memgraph_value, results[0]["relationships"]))
     return Graph(nodes=nodes, relationships=relationships)
-
-
-def _escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]]:
-    """Fix backslash bug in gqlalchemy"""
-    replacements = {
-        "\\": "\\\\",
-        "'": "\\'",
-    }
-    if isinstance(d, str):
-        for k, v in replacements.items():
-            d = d.replace(k, v)
-        return d
-    if isinstance(d, dict):
-        return {k: _escaped(v) for k, v in d.items()}
-    return d
 
 
 class GraphRepository(BaseRepository):
@@ -48,7 +33,7 @@ class GraphRepository(BaseRepository):
         """Get all possible values for a property including None"""
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(labels=label, variable="n", **(_escaped(filters) or {}))
+            .node(labels=label, variable="n", **(escaped(filters) or {}))
         )
         if exclude_none:
             q = q.add_custom_cypher(f"WHERE n.{key} IS NOT NULL")
@@ -68,7 +53,7 @@ class GraphRepository(BaseRepository):
         """Get all nodes with a specific label"""
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(labels=label, variable="n", **(_escaped(filters) or {}))
+            .node(labels=label, variable="n", **(escaped(filters) or {}))
             .return_("DISTINCT n")
         )
         if limit is not None:
@@ -87,7 +72,7 @@ class GraphRepository(BaseRepository):
         """Get a sub-graph from a starting node"""
         if not start_id:
             return Graph()
-        start_id = _escaped(start_id)
+        start_id = escaped(start_id)
         # get nodes
         q = (gq.match(connection=self.db_conn.db)
              .node(label, variable="n", id=start_id))
@@ -142,14 +127,14 @@ class GraphRepository(BaseRepository):
             .node(
                 labels=label,
                 variable="n",
-                **(_escaped(filters) or {}),
+                **(escaped(filters) or {}),
             )
         )
         if new_values:
             q = q.set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=_escaped(filter_none(new_values)),
+                literal=escaped(filter_none(new_values)),
             )
         if new_labels:
             new_labels = [new_labels] if isinstance(new_labels, str) else new_labels
@@ -171,7 +156,7 @@ class GraphRepository(BaseRepository):
                 .node(
                     labels=label,
                     variable="n",
-                    **(_escaped(filters) or {}),
+                    **(escaped(filters) or {}),
                 )
                 .remove([f"n.{key}" for key in keys])
             )
@@ -195,8 +180,8 @@ class GraphRepository(BaseRepository):
         - add src id and src.alt_ids to dst.alt_ids
         - then remove src
         """
-        src_id = _escaped(src_id)
-        dst_id = _escaped(dst_id)
+        src_id = escaped(src_id)
+        dst_id = escaped(dst_id)
         # check if dst node exists
         q = (
             gq.match(connection=self.db_conn.db)
@@ -274,19 +259,19 @@ class GraphRepository(BaseRepository):
             .node(
                 label,
                 variable="n",
-                **(_escaped(filters) or {}),
+                **(escaped(filters) or {}),
             )
             .add_custom_cypher("ON CREATE")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=_escaped(filter_none(create_values)),
+                literal=escaped(filter_none(create_values)),
             )
             .add_custom_cypher("ON MATCH")
             .set_(
                 item="n",
                 operator=Operator.INCREMENT,
-                literal=_escaped(filter_none(update_values)),
+                literal=escaped(filter_none(update_values)),
             )
             .return_("n")
         )
@@ -301,8 +286,8 @@ class GraphRepository(BaseRepository):
             relationship_type: str = "",
             properties: t.Optional[dict[str, t.Any]] = None,
     ) -> None:
-        from_id = _escaped(from_id)
-        to_id = _escaped(to_id)
+        from_id = escaped(from_id)
+        to_id = escaped(to_id)
         q = (
             gq.match(connection=self.db_conn.db)
             .node(label, variable="src", id=from_id)
@@ -312,7 +297,7 @@ class GraphRepository(BaseRepository):
             .node(variable="src")
             .to(relationship_type, True, variable="rel")
             .node(variable="dst")
-            .set_("rel", Operator.INCREMENT, literal=_escaped(filter_none(properties)))
+            .set_("rel", Operator.INCREMENT, literal=escaped(filter_none(properties)))
             .return_("rel")
         )
         execute_query(q)
@@ -325,7 +310,7 @@ class GraphRepository(BaseRepository):
     ) -> int:
         q = (
             gq.match(connection=self.db_conn.db)
-            .node(label, variable="n", **(_escaped(filters) or {}))
+            .node(label, variable="n", **(escaped(filters) or {}))
             .return_("COUNT(DISTINCT n) as count")
         )
         results = execute_query(q)
