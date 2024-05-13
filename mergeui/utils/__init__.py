@@ -1,4 +1,5 @@
 import typing as t
+from loguru import logger
 import datetime as dt
 import yaml
 import yaml.scanner
@@ -90,3 +91,27 @@ def custom_serializer(obj):
     if isinstance(obj, dt.datetime):
         return iso_format_dt(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
+
+
+def log_progress(count: int, total: int, step: int = 5) -> None:
+    """Log progress percentage."""
+    count = count + 1  # start from 1
+    if total > 100 * step:
+        if count % (total // 100 * step) == 0:
+            logger.debug(f"{(count / total) * 100:.2f}%")
+
+
+def escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]]:
+    """Escape value for gqlalchemy"""
+    replacements = {
+        "\\": "\\\\",
+        "'": "\\'",
+        '"': '\\"',
+    }
+    if isinstance(d, str):
+        for k, v in replacements.items():
+            d = d.replace(k, v)
+        return d
+    if isinstance(d, dict):
+        return {k: escaped(v) for k, v in d.items()}
+    return d

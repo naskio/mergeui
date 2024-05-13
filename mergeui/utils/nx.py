@@ -4,6 +4,7 @@ from pathlib import Path
 import networkx as nx
 import gqlalchemy as gq
 from gqlalchemy.transformations.translators.nx_translator import NxTranslator
+from utils import log_progress
 
 
 def preview_nx_graph(graph: nx.Graph) -> None:
@@ -75,16 +76,10 @@ def import_nx_graph_to_db(graph: nx.Graph, db: gq.Memgraph) -> None:
     queries = list(translator.to_cypher_queries(graph))
     logger.debug(f"Executing {len(queries)} queries")
     total = len(queries)
-    step = 5
-    count = 0
-    for query in queries:
-        count += 1
+    for ind, query in enumerate(queries):
         logger.trace(f"{query}")
         db.execute(query)
-        # logging progress
-        if total > 100 * step:
-            if count % (total // 100 * step) == 0:
-                logger.debug(f"{(count / total) * 100:.2f}%")
+        log_progress(ind, total, step=5)
     if queries:
         logger.success(f"Graph imported")
     else:
