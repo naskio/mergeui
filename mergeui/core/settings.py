@@ -40,6 +40,7 @@ class Settings(pds.BaseSettings):
     text_index_name: str = "modelDocuments"
     # logging
     logging_level: t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL'] = "DEBUG"
+    rq_logging_level: t.Optional[t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']] = None
 
 
 settings = Settings()
