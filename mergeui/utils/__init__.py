@@ -101,6 +101,17 @@ def log_progress(count: int, total: int, step: int = 5) -> None:
             logger.debug(f"{(count / total) * 100:.2f}%")
 
 
+def format_duration(start: float, end: float) -> str:
+    """Format duration from start to end time in seconds since epoch."""
+    duration = end - start
+    hours, remainder = divmod(duration, 3600.0)
+    minutes, seconds = divmod(remainder, 60.0)
+    hours = int(hours)
+    minutes = int(minutes)
+    seconds = round(seconds, 3)
+    return f"{hours:02}:{minutes:02}:{seconds:0>6.3f} (hh:mm:ss.sss)"
+
+
 def escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]]:
     """Escape value for gqlalchemy"""
     replacements = {
