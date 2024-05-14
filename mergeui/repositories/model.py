@@ -77,5 +77,5 @@ class ModelRepository(BaseRepository):
             q = q.order_by(properties=[(f"n.{sort_key}", sort_order or Order.ASC)])
         if limit is not None:
             q = q.limit(limit)
-        result = list(map(lambda x: x.get("n"), execute_query(q)))
+        result = list(map(lambda x: x.get("n"), execute_query(q) or []))
         return t.cast(list[Model], result)

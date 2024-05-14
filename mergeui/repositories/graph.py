@@ -45,7 +45,7 @@ class GraphRepository(BaseRepository):
             .return_(f"DISTINCT v")
             .order_by(properties=([("count", Order.DESC)] if sort_by == 'count' else []) + [("v", Order.ASC)])
         )
-        return list(map(lambda x: x.get("v"), execute_query(q)))
+        return list(map(lambda x: x.get("v"), execute_query(q) or []))
 
     def list_nodes(
             self,
@@ -62,7 +62,7 @@ class GraphRepository(BaseRepository):
         )
         if limit is not None:
             q = q.limit(limit)
-        result = list(map(lambda x: x.get("n"), execute_query(q)))
+        result = list(map(lambda x: x.get("n"), execute_query(q) or []))
         return t.cast(list[gq.Node], result)
 
     def get_sub_graph(
