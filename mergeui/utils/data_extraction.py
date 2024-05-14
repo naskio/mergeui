@@ -460,13 +460,13 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     scores["winogrande_score"] = results.get("harness|winogrande|5", {}).get("acc")
     # gsm8k
     scores["gsm8k_score"] = results.get("harness|gsm8k|5", {}).get("acc")
-    # filter NaN values
-    scores = filter_none({k: v for k, v in scores.items() if not math.isnan(v)})
+    # filter None and NaN values => IAFrance/ECE-TW3-JRGL-VHF9
+    scores = {k: v for k, v in scores.items() if isinstance(v, float) and not math.isnan(v)}
     # average
     if len(scores) > 0:
         scores["average_score"] = sum(scores.values()) / len(scores)
     else:
-        return None
+        return None  # no scores found
     # evaluated_at
     if evaluated_at is not None:
         scores["evaluated_at"] = aware_to_naive_dt(evaluated_at)
