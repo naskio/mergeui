@@ -168,13 +168,13 @@ def main(
     limit = int(limit) if limit is not None else limit
     settings = get_settings()
     repository: 'repositories.GraphRepository' = get_graph_repository()
-    if reset_db:
-        repository.db_conn.setup(reset_if_not_empty=True)
-    db_index__indexed = gq.MemgraphIndex("Model", property="indexed")
     # setup
-    logger.debug(f"Creating indexes...")
-    repository.db_conn.db.create_index(db_index__indexed)
-    logger.debug(f"Indexes created")
+    if reset_db:
+        repository.db_conn.reset()
+        repository.db_conn.setup_pre_populate()
+    logger.debug(f"Creating extra indexes...")
+    repository.db_conn.db.create_index(gq.MemgraphIndex("Model", property="indexed"))
+    logger.debug(f"Extra indexes created")
     # indexing models
     index_graph: dict = index_models(limit, local_files_only=local_files_only)
     # save to json
@@ -211,9 +211,12 @@ def main(
     logger.debug(f"Removing extra properties...")
     repository.remove_properties(label="Model", keys={"indexed", "new_id"})
     logger.debug(f"Extra properties removed")
-    logger.debug(f"Dropping indexes...")
-    repository.db_conn.db.drop_index(db_index__indexed)
-    logger.debug(f"Indexes dropped")
+    logger.debug(f"Dropping extra indexes...")
+    repository.db_conn.db.drop_index(gq.MemgraphIndex("Model", property="indexed"))
+    logger.debug(f"Extra indexes dropped")
+    if reset_db:
+        repository.db_conn.setup_post_populate()
+    # logging
     end_time = time.time()
     logger.success(f"completed in {format_duration(start_time, end_time)}")
 

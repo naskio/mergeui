@@ -78,45 +78,64 @@ class DatabaseConnection(BaseDatabaseConnection):
         self.db = create_db_connection(self.settings)
 
     def setup(self, reset_if_not_empty: bool = True):
+        """Setup database with all constraints and indexes."""
         logger.info("Setting up database...")
-        if reset_if_not_empty and not self.is_empty():
+        if reset_if_not_empty:
             self.reset()
-        # existing constraints
+        self.setup_pre_populate()
+        self.setup_post_populate()
+        logger.success("Database setup completed.")
+
+    def setup_pre_populate(self):
+        """Add constraints and indexes relevant before populating the database."""
+        # existence and uniqueness constraints
         self.db.create_constraint(gq.MemgraphConstraintExists("Model", property="id"))
-        # unique constraints
         self.db.create_constraint(gq.MemgraphConstraintUnique("Model", property="id"))
-        logger.debug("Constraints created")
+        logger.debug("Pre-populate constraints created")
         # label indexes
         self.db.create_index(gq.MemgraphIndex("Model"))
         self.db.create_index(gq.MemgraphIndex("MergedModel"))
         # property indexes
         self.db.create_index(gq.MemgraphIndex("Model", property="id"))
+        logger.debug("Pre-populate indexes created")
+
+    def setup_post_populate(self):
+        """Add indexes relevant after populating the database."""
+        # property indexes
+        self.db.create_index(gq.MemgraphIndex("Model", property="license"))
+        self.db.create_index(gq.MemgraphIndex("Model", property="merge_method"))
+        self.db.create_index(gq.MemgraphIndex("Model", property="architecture"))
         # edge indexes
         self.db.execute(f"CREATE EDGE INDEX ON :DERIVED_FROM")
         # text index
         self.db.execute(f"CREATE TEXT INDEX {self.settings.text_index_name} ON :Model")
-        logger.debug("Indexes created")
-        logger.success("Database setup completed.")
+        logger.debug("Post-populate indexes created")
 
-    def reset(self):
-        logger.info("Resetting database...")
-        self.db.drop_database()
-        logger.debug(f"Database dropped")
-        for db_c in self.db.get_constraints():
-            self.db.drop_constraint(db_c)
-        logger.debug(f"Constraints dropped")
-        for db_i in self.db.get_indexes():
-            self.db.drop_index(db_i)
-        self.db.execute(f"DROP EDGE INDEX ON :DERIVED_FROM")
-        self.db.execute(f"DROP TEXT INDEX {self.settings.text_index_name}")
-        logger.debug(f"Indexes dropped")
-        assert self.is_empty(), "Database is not empty after reset."
-        logger.success("Database reset completed.")
+    def reset(self, force: bool = False):
+        """Reset database by dropping all data, constraints and indexes."""
+        if force or not self.is_empty():
+            logger.info("Resetting database...")
+            self.db.drop_database()
+            logger.debug(f"Database dropped")
+            for db_c in self.db.get_constraints():
+                self.db.drop_constraint(db_c)
+            logger.debug(f"Constraints dropped")
+            for db_i in self.db.get_indexes():
+                self.db.drop_index(db_i)
+            self.db.execute(f"DROP EDGE INDEX ON :DERIVED_FROM")
+            self.db.execute(f"DROP TEXT INDEX {self.settings.text_index_name}")
+            logger.debug(f"Indexes dropped")
+            assert self.is_empty(), "Database is not empty after reset."
+            logger.success("Database reset completed.")
+        else:
+            logger.warning("Database is already empty. Skipping reset.")
 
     def is_empty(self) -> bool:
-        return not self.db.get_constraints() and not self.db.get_indexes()
+        """Check if database is empty."""
+        return not (self.db.get_constraints() or self.db.get_indexes())
 
     def populate_from_json_file(self, json_path: Path):
+        """Populate database with data from JSON file."""
         graph: nx.Graph = load_nx_graph_from_json_file(json_path)
         for node in graph.nodes:  # handling dt.datetime fields
             for dt_field in get_fields_from_class(Model, dt.datetime, include_optionals=True):
