@@ -1,7 +1,7 @@
 import typing as t
 import fastapi as fa
 import pydantic as pd
-from utils import pretty_format_dt, pretty_format_int, pretty_format_float
+from utils import pretty_format_dt, pretty_format_int, pretty_format_float, pretty_format_description, is_valid_repo_id
 from core.schema import Model, Graph, BaseValidationError
 from web.schema import DataFrameDataType, DisplayColumnType, PartialModel, DataGraph
 
@@ -35,6 +35,8 @@ def models_as_partials(
     pretty_set = display_columns if pretty else set()
     return list(map(lambda m: {
         **m.dict(include=display_columns),
+        **{k: pretty_format_description(getattr(m, k), m.private, is_valid_repo_id(m.id)) for k in {"description"} if
+           k in pretty_set},
         **{k: pretty_format_dt(getattr(m, k)) for k in Model.dt_fields() if k in pretty_set},
         **{k: pretty_format_int(getattr(m, k)) for k in Model.int_fields() if k in pretty_set},
         **{k: pretty_format_float(getattr(m, k), suffix="%") for k in Model.float_fields() if k in pretty_set},
@@ -94,6 +96,7 @@ def models_as_dataframe(
                     datatype_ = 'markdown'
                 elif col == 'description':
                     datatype_ = 'markdown'
+                    value = pretty_format_description(value, model.private, is_valid_repo_id(model.id))
                 elif col in dt_fields:
                     value = pretty_format_dt(value)
                 elif col in int_fields:

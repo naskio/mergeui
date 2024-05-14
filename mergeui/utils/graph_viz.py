@@ -11,7 +11,7 @@ from bokeh.plotting import figure
 from bokeh.palettes import RdYlGn11, Set3_12
 import core.settings
 from core.dependencies import get_settings
-from utils import pretty_format_dt, pretty_format_int, pretty_format_float
+from utils import pretty_format_dt, pretty_format_int, pretty_format_float, pretty_format_description, is_valid_repo_id
 from utils.images import load_image_as_data_uri, load_image_as_np_array
 from core.schema import Graph, DerivedFrom, Model
 from web.schema import LabelFieldType, ColorFieldType
@@ -142,19 +142,20 @@ def _get_graph_data_sources(
             "border_line_width": 1.5,
             "border_radius": 24,
             **get_node_styles(
-                value=node_data.get(color_field),
+                value=node_data.get(str(color_field) if color_field else None),
                 is_selected=is_selected,
                 is_merged_model=is_merged_model,
             ),
         })
         # pretty format fields after computing styles
         node_data.update({
+            "description": pretty_format_description(node.description, node.private, is_valid_repo_id(node.id)),
             **{k: pretty_format_dt(getattr(node, k)) for k in Model.dt_fields()},
             **{k: pretty_format_int(getattr(node, k)) for k in Model.int_fields()},
             **{k: pretty_format_float(getattr(node, k), "%") for k in Model.float_fields()},
         })
         # label
-        node_data["label"] = node_data.get(label_field) or (" " * 5)
+        node_data["label"] = node_data.get(str(label_field) if label_field else None) or (" " * 5)
         # legend_label
         if color_field == "is_permissive_license" and is_permissive_license_label is not None:
             node_data["legend_label"] = is_permissive_license_label
