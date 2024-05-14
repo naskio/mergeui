@@ -9,16 +9,11 @@ from loguru import logger
 import re
 import huggingface_hub as hf
 from huggingface_hub import hf_api
-from utils import parse_yaml, filter_none, parse_iso_dt, aware_to_naive_dt
+from utils import parse_yaml, filter_none, parse_iso_dt, aware_to_naive_dt, is_valid_repo_id
 from core.schema import MergeMethodType
 
 
 # ##### Hub #####
-
-def is_valid_repo_id(repo_id: str) -> bool:
-    """Check if str a valid repo_id with namespace/repo_name format."""
-    return bool(re.match(r"^[-.\w]+/[-.\w]+$", repo_id))
-
 
 def get_data_origin(
         *,

@@ -14,8 +14,8 @@ import core.db
 import repositories
 from core.dependencies import get_settings, get_graph_repository
 from utils import filter_none, custom_serializer, log_progress, format_duration
-from utils.data_extraction import list_model_infos, hf_whoami
-from utils.jobs import index_model_by_id
+from utils.index.data_extraction import list_model_infos, hf_whoami
+from utils.index.jobs import index_model_by_id
 
 
 def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = True) -> None:
