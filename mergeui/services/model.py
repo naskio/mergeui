@@ -77,13 +77,13 @@ class ModelService(BaseService):
         return self.gr.list_property_values(key="id", exclude_none=True, filters=dict(private=private))
 
     def get_license_choices(self) -> list[str]:
-        return self.gr.list_property_values(key="license", exclude_none=True)
+        return self.gr.list_property_values(key="license", exclude_none=True, sort_by="count")
 
     def get_merge_method_choices(self) -> list[str]:
-        return self.gr.list_property_values(key="merge_method", exclude_none=True)
+        return self.gr.list_property_values(key="merge_method", exclude_none=True, sort_by="count")
 
     def get_architecture_choices(self) -> list[str]:
-        return self.gr.list_property_values(key="architecture", exclude_none=True)
+        return self.gr.list_property_values(key="architecture", exclude_none=True, sort_by="count")
 
     def get_default_model_id(self) -> t.Optional[str]:
         top_models = self.mr.list_models(

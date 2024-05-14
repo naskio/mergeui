@@ -28,7 +28,8 @@ class GraphRepository(BaseRepository):
             key: str = "id",
             label: str = "",
             exclude_none: bool = False,
-            filters: t.Optional[dict[str, t.Any]] = None
+            filters: t.Optional[dict[str, t.Any]] = None,
+            sort_by: t.Optional[t.Literal['count']] = None,
     ) -> list[str]:
         """Get all possible values for a property including None"""
         q = (
@@ -38,8 +39,11 @@ class GraphRepository(BaseRepository):
         if exclude_none:
             q = q.add_custom_cypher(f"WHERE n.{key} IS NOT NULL")
         q = (
-            q.return_(f"DISTINCT n.{key} as v")
-            .order_by(properties=[("v", Order.ASC)])
+            q.with_(
+                f"n.{key} as v{', count(*) as count' if sort_by == 'count' else ''}"
+            )
+            .return_(f"DISTINCT v")
+            .order_by(properties=([("count", Order.DESC)] if sort_by == 'count' else []) + [("v", Order.ASC)])
         )
         return list(map(lambda x: x.get("v"), execute_query(q)))
 
