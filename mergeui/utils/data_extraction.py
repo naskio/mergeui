@@ -336,14 +336,18 @@ def extract_model_name_from_model_card(model_card: t.Optional[hf.ModelCard]) -> 
     return model_card.data.model_name
 
 
-def extract_model_name_from_model_id(model_id: t.Optional[str]) -> t.Optional[str]:
-    if not model_id:
-        return None
+def extract_model_name_from_model_id(model_id: str) -> str:
     parts = model_id.split("/")
     if len(parts) == 1:
         parts = model_id.split("\\")
     if parts:
-        return parts[-1]
+        return parts[-1] if is_valid_repo_id(model_id) else f"#{parts[-1]}"
+    return model_id
+
+
+def extract_author_from_model_id(model_id: str) -> t.Optional[str]:
+    if is_valid_repo_id(model_id):
+        return model_id.split("/")[0]
 
 
 def sanitize_description(description: str) -> str:
@@ -357,32 +361,30 @@ def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCar
         return None
     readme_str = model_card.content
     hints = [
-        " is a fine-tuned ",
-        "is a merge of",
-        " based on ",
-        "was merged using",
-        "created using",
-        "made with ",
-        "was trained ",
-        " is improved version of ",
-        "this model is ",
-        " models are ",
-        "this is an ",
-        " is a ",
+        "fine-tune",
+        "finetune",
+        "finetuning",
+        "fine-tuning",
+        "merge ",
+        "pretrain",
         "mergekit",
         "lazymergekit",
-        "this is the ",
-        "it is the ",
-        "merge ",
-        " using ",
-        "large language model ",
-        "language model ",
-        "this model extends ",
-        " model improves ",
+        " large language model ",
+        " language model ",
+        " based on ",
+        " created ",
+        " made with ",
+        " trained ",
+        " pre-trained ",
+        " series of ",
+        " collection of ",
+        " family of ",
+        " version of ",
+        "this model is ",
     ]
     skip_starts = [
         "-",
-        "<!--",
+        "<",
     ]
     card_data_skipped = None
     for ind, line in enumerate(readme_str.splitlines()):
@@ -444,8 +446,8 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
             if test_score is not None:
                 mmlu_sum += test_score
                 mmlu_count += 1
-    # if mmlu_count == 57:
-    if mmlu_count > 0:
+    # Massive Multi-Task Language Understanding, knowledge on 57 domains (5-shot)
+    if mmlu_count == 57:  # if mmlu_count > 0:
         scores["mmlu_score"] = mmlu_sum / mmlu_count
     # truthfulqa
     scores["truthfulqa_score"] = results.get("harness|truthfulqa:mc|0", {}).get("mc2")
@@ -453,12 +455,13 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     scores["winogrande_score"] = results.get("harness|winogrande|5", {}).get("acc")
     # gsm8k
     scores["gsm8k_score"] = results.get("harness|gsm8k|5", {}).get("acc")
-    scores = filter_none(scores)
     # filter NaN values
-    scores = {k: v for k, v in scores.items() if not math.isnan(v)}
+    scores = filter_none({k: v for k, v in scores.items() if not math.isnan(v)})
     # average
     if len(scores) > 0:
         scores["average_score"] = sum(scores.values()) / len(scores)
+    else:
+        return None
     # evaluated_at
     if evaluated_at is not None:
         scores["evaluated_at"] = aware_to_naive_dt(evaluated_at)
