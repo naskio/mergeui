@@ -56,7 +56,8 @@ def index_models(limit: t.Optional[int], local_files_only: bool = False) -> dict
     # logging whoami
     hf_whoami()
     # download dataset
-    logger.debug(f"Downloading dataset: HF_HUB_ENABLE_HF_TRANSFER={os.environ.get('HF_HUB_ENABLE_HF_TRANSFER')}...")
+    logger.debug(f"Downloading dataset: HF_HUB_ENABLE_HF_TRANSFER={os.environ.get('HF_HUB_ENABLE_HF_TRANSFER')}"
+                 f" and local_files_only={local_files_only}...")
     results_dataset_folder: str = hf.snapshot_download(
         repo_id='open-llm-leaderboard/results',
         repo_type='dataset',
