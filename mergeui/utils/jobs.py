@@ -12,7 +12,7 @@ from utils.data_extraction import get_model_info, load_model_card, download_merg
     extract_model_architecture_from_model_info, extract_merge_method_from_model_description, \
     extract_merge_method_from_mergekit_config, extract_base_models_from_tags, extract_base_models_from_model_card, \
     extract_base_models_from_mergekit_configs, extract_mergekit_configs_from_model_card, \
-    extract_mergekit_configs_from_file
+    extract_mergekit_configs_from_file, extract_model_name_from_model_id
 
 
 def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict, list]:
@@ -27,11 +27,14 @@ def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict,
     model_info, model_info_origin = _got
     # private/local model
     if model_info is None:
+        model_name = extract_model_name_from_model_id(model_id)
         logger.warning(f"Model {model_id} not found in HF")
         end_time = time.time()
         logger.success(f"Job={model_id} completed in {format_duration(start_time, end_time)}")
         return filter_none({
             "id": model_id,
+            "name": f"{model_name}:local" if model_name else None,
+            "description": "This model is not available on HuggingFace Hub and seems to be a local model.",
             "indexed": True,
             "indexed_at": aware_to_naive_dt(dt.datetime.utcnow()),
             "private": True,
@@ -53,7 +56,7 @@ def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict,
         "id": model_id,
         "new_id": model_info.id if model_info.id != model_id else None,
         "url": extract_model_url_from_model_info(model_info),
-        "name": extract_model_name_from_model_card(model_card),
+        "name": extract_model_name_from_model_card(model_card) or extract_model_name_from_model_id(model_info.id),
         "description": description,
         "license": extract_license_from_tags(model_info.tags) or extract_license_from_model_card(model_card),
         "author": model_info.author,

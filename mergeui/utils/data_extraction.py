@@ -336,6 +336,16 @@ def extract_model_name_from_model_card(model_card: t.Optional[hf.ModelCard]) -> 
     return model_card.data.model_name
 
 
+def extract_model_name_from_model_id(model_id: t.Optional[str]) -> t.Optional[str]:
+    if not model_id:
+        return None
+    parts = model_id.split("/")
+    if len(parts) == 1:
+        parts = model_id.split("\\")
+    if parts:
+        return parts[-1]
+
+
 def sanitize_description(description: str) -> str:
     description = re.sub(r'[^\w_.-]+', ' ', description)
     description = re.sub(r'\s+', ' ', description)
@@ -352,11 +362,13 @@ def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCar
         " based on ",
         "was merged using",
         "created using",
-        "made with",
+        "made with ",
         "was trained ",
-        " is a ",
+        " is improved version of ",
         "this model is ",
+        " models are ",
         "this is an ",
+        " is a ",
         "mergekit",
         "lazymergekit",
         "this is the ",
@@ -364,13 +376,23 @@ def extract_model_description_from_model_card(model_card: t.Optional[hf.ModelCar
         "merge ",
         " using ",
         "large language model ",
-        "language model",
+        "language model ",
+        "this model extends ",
+        " model improves ",
     ]
     skip_starts = [
         "-",
         "<!--",
     ]
-    for line in readme_str.splitlines():
+    card_data_skipped = None
+    for ind, line in enumerate(readme_str.splitlines()):
+        if ind == 0 and line.startswith('---'):
+            card_data_skipped = False
+        elif card_data_skipped is False:
+            if line.startswith('---'):
+                card_data_skipped = True
+            else:
+                continue
         line = line.strip()
         _line = line.lower()
         if any(_line.startswith(start) for start in skip_starts):
