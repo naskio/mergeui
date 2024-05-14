@@ -1,6 +1,7 @@
 import typing as t
 from loguru import logger
 import datetime as dt
+import re
 import yaml
 import yaml.scanner
 from numerize import numerize
@@ -56,6 +57,21 @@ def pretty_format_float(f_: t.Optional[float], suffix: str = "", as_float: bool 
         if as_float:
             return res
         return f"{res}{suffix}"
+
+
+def pretty_format_description(s: t.Optional[str], private: bool, is_valid_id: bool) -> t.Optional[str]:
+    """Format model description for visualisation."""
+    if not s:
+        if not is_valid_id:
+            return "Not available on HuggingFace and seems to be a local (#) model."
+        if private:
+            return "Not available on HuggingFace and seems to be a private or deleted model."
+    return s
+
+
+def is_valid_repo_id(repo_id: str) -> bool:
+    """Check if str a valid repo_id with namespace/repo_name format."""
+    return bool(re.match(r"^[-.\w]+/[-.\w]+$", repo_id))
 
 
 def titlify(s: t.Optional[str]) -> t.Optional[str]:
