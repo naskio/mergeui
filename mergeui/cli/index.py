@@ -4,7 +4,6 @@ import json
 import os
 from loguru import logger
 import time
-import redis
 import rq
 import huggingface_hub as hf
 from huggingface_hub import hf_api
@@ -15,7 +14,7 @@ import repositories
 from core.dependencies import get_settings, get_graph_repository
 from utils import filter_none, custom_serializer, log_progress, format_duration
 from utils.index.data_extraction import list_model_infos, hf_whoami
-from utils.index.jobs import index_model_by_id
+from utils.index.jobs import index_model_by_id, create_redis_connection
 
 
 def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = True) -> None:
@@ -47,11 +46,7 @@ def index_models(limit: t.Optional[int], local_files_only: bool = False) -> dict
     """Index All models from the HuggingFace Hub"""
     nodes_map, rels_list = {}, []
     settings: 'core.settings.Settings' = get_settings()
-    r = redis.Redis(
-        host=settings.redis_dsn.host,
-        port=settings.redis_dsn.port,
-        db=settings.redis_dsn.path.replace("/", "")
-    )
+    r = create_redis_connection(settings)
     q = rq.Queue(connection=r)
     # logging whoami
     hf_whoami()

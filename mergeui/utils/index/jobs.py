@@ -3,6 +3,7 @@ import datetime as dt
 from loguru import logger
 from pathlib import Path
 import time
+import redis
 import huggingface_hub as hf
 from huggingface_hub import hf_api
 from utils import aware_to_naive_dt, filter_none, format_duration
@@ -13,6 +14,18 @@ from utils.index.data_extraction import get_model_info, load_model_card, downloa
     extract_merge_method_from_mergekit_config, extract_base_models_from_tags, extract_base_models_from_model_card, \
     extract_base_models_from_mergekit_configs, extract_mergekit_configs_from_model_card, \
     extract_mergekit_configs_from_file, extract_model_name_from_model_id, extract_author_from_model_id
+from core.settings import Settings
+
+
+def create_redis_connection(settings: Settings) -> redis.Redis:
+    return redis.Redis(
+        host=settings.redis_dsn.host,
+        port=settings.redis_dsn.port,
+        db=settings.redis_dsn.path.replace("/", ""),
+        username=settings.redis_dsn.username,
+        password=settings.redis_dsn.password,
+        client_name=f"{settings.app_name}",
+    )
 
 
 def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict, list]:
