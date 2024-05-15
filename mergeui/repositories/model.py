@@ -100,7 +100,10 @@ class ModelRepository(BaseRepository):
             q = q.limit(limit)
         result = map(lambda x: x.get("n"), execute_query(q) or [])
         if hits is not None:
-            result = filter(lambda m: m.id in hits, result)
+            if self.db_conn.settings.whoosh_case_sensitive:
+                result = filter(lambda m: m.id in hits, result)
+            else:
+                result = filter(lambda m: str(m.id).lower() in hits, result)
         result = list(result)
         return t.cast(list[Model], result)
 
@@ -115,15 +118,7 @@ class ModelRepository(BaseRepository):
             writer = self.index.writer()
             models = self.list_models(limit=None)
             for model in models:
-                writer.add_document(
-                    id=model.id,
-                    name=model.name,
-                    description=model.description,
-                    license=model.license,
-                    author=model.author,
-                    merge_method=model.merge_method,
-                    architecture=model.architecture,
-                )
+                writer.add_document(**self._get_document(model))
             writer.commit()
             self.searcher = self.index.searcher()
             logger.success("Text-search index created successfully")
@@ -134,6 +129,7 @@ class ModelRepository(BaseRepository):
         if force or not self._is_empty_text_search_index():
             logger.info("Resetting text-search index...")
             shutil.rmtree(self.index_dir)
+            logger.success("Text-search index reset successfully")
         else:
             logger.warning("Text-search index is already empty. Skipping reset.")
 
@@ -142,8 +138,9 @@ class ModelRepository(BaseRepository):
 
     def _search_models(self, q_str: str, limit: t.Optional[int] = None) -> set[str]:
         """Search models using the text-search index"""
+        q_str = q_str.lower() if not self.db_conn.settings.whoosh_case_sensitive else q_str
         q = self.query_parser.parse(q_str)
-        logger.trace(f"query: {q}")
+        logger.trace(f"Parsed Query: {q}")
         results = set()
         hits = self.searcher.search(q, limit=limit)
         for hit in hits:
@@ -152,20 +149,34 @@ class ModelRepository(BaseRepository):
 
     def _get_schema(self) -> whf.Schema:
         self.schema = whf.Schema(
-            id=whf.ID(stored=True, unique=True),
-            name=whf.KEYWORD,
-            description=whf.TEXT,
-            license=whf.KEYWORD,
-            author=whf.KEYWORD,
-            merge_method=whf.KEYWORD,
-            architecture=whf.KEYWORD,
+            id=whf.TEXT(stored=True, field_boost=3.0),  # , unique=True
+            name=whf.ID(field_boost=2.0),
+            author=whf.ID(field_boost=2.0),
+            description=whf.TEXT(field_boost=1.0),
+            license=whf.TEXT(field_boost=0.5),
+            merge_method=whf.ID(field_boost=0.5),
+            architecture=whf.KEYWORD(field_boost=0.5),
         )
         return self.schema
+
+    def _get_document(self, model: Model) -> dict:
+        _doc = dict(
+            id=model.id,
+            name=model.name,
+            author=model.author,
+            description=model.description,
+            license=model.license,
+            merge_method=model.merge_method,
+            architecture=model.architecture,
+        )
+        if not self.db_conn.settings.whoosh_case_sensitive:
+            _doc = {k: str(v).lower() if v else v for k, v in _doc.items()}
+        return _doc
 
     def _get_query_parser(self) -> whq.QueryParser:
         # self.query_parser = whq.QueryParser("name", schema=self.schema, group=whq.OrGroup)
         self.query_parser = whq.MultifieldParser(
-            ["name", "author", "license", "merge_method", "architecture", "description"],
+            ["id", "name", "author", "description", "license", "merge_method", "architecture"],
             schema=self.schema,
         )
         self.query_parser.remove_plugin_class(whq.FieldsPlugin)

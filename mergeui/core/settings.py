@@ -38,6 +38,7 @@ class Settings(pds.BaseSettings):
     # db settings
     text_index_name: str = "modelDocuments"
     disable_memgraph_text_search: bool = True
+    whoosh_case_sensitive: bool = False
     # logging
     logging_level: t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL'] = "DEBUG"
     rq_logging_level: t.Optional[t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']] = None
