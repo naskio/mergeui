@@ -3,6 +3,7 @@ import typing as t
 from loguru import logger
 import datetime as dt
 from pathlib import Path
+from urllib.parse import unquote
 import gqlalchemy as gq
 from gqlalchemy.vendors.database_client import DatabaseClient
 import networkx as nx
@@ -20,17 +21,17 @@ def create_db_connection(settings: 'core.settings.Settings') -> DatabaseClient:
     args = dict(
         host=settings.database_url.host,
         port=settings.database_url.port,
-        username=settings.database_url.username or "",
-        password=settings.database_url.password or "",
+        username=unquote(settings.database_url.username or ""),
+        password=unquote(settings.database_url.password or ""),
         encrypted=settings.database_url.scheme.endswith("+s"),
         client_name=f"{settings.app_name}_{random.randint(0, 500)}",
     )
-    if settings.database_url.scheme.startswith("bolt"):
-        return gq.Memgraph(
-            **args,
-            lazy=False,
-        )
-    return gq.Neo4j(**args)
+    if settings.database_url.scheme.startswith("neo4j"):
+        return gq.Neo4j(**args)
+    return gq.Memgraph(
+        **args,
+        lazy=False,
+    )
 
 
 def auto_retry_query(*, max_tries: t.Optional[int] = 10, delay: t.Optional[float] = None):
