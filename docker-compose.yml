@@ -1,0 +1,66 @@
+services:
+  memgraph-dev:
+    image: memgraph/memgraph-mage:latest
+    container_name: memgraph-dev
+    restart: always
+    ports:
+      - "7687:7687" # bolt server
+      - "7444:7444" # monitoring server
+    command: [
+      "--log-level","TRACE",
+      "--experimental-enabled", "text-search",
+      "--query-execution-timeout-sec", "120",
+    ]
+    volumes:
+      - mg_dev_data:/var/lib/memgraph:rw # data persistence
+      - mg_dev_logs:/var/log/memgraph:rw # logs
+      - mg_dev_settings:/etc/memgraph:rw # configuration settings
+
+  memgraph-test:
+    image: memgraph/memgraph-mage:latest
+    container_name: memgraph-test
+    restart: always
+    ports:
+      - "7688:7687" # Bolt server
+      - "7445:7444" # monitoring server
+    command: [
+      "--log-level","TRACE",
+      "--experimental-enabled", "text-search",
+      "--query-execution-timeout-sec", "120",
+    ]
+    volumes:
+      - mg_test_data:/var/lib/memgraph:rw # data persistence
+      - mg_test_logs:/var/log/memgraph:rw # logs
+      - mg_test_settings:/etc/memgraph:rw # configuration settings
+
+  memgraph-lab:
+    image: memgraph/lab:latest
+    container_name: memgraph-lab
+    restart: always
+    ports:
+      - "3000:3000" # Memgraph Lab UI
+    environment: # https://memgraph.com/docs/data-visualization/install-and-connect#environment-variables
+      - QUICK_CONNECT_IS_DISABLED=false
+      - QUICK_CONNECT_MG_HOST=memgraph-dev
+      - QUICK_CONNECT_MG_PORT=7687
+    # UI data stored in browser's storage (local storage and IndexedDB)
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379" # redis server
+    volumes:
+      - redis_data:/data:rw
+      - /etc/localtime:/etc/localtime:ro
+
+
+volumes:
+  mg_dev_data:
+  mg_dev_logs:
+  mg_dev_settings:
+  mg_test_data:
+  mg_test_logs:
+  mg_test_settings:
+  redis_data:
