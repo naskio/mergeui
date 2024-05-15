@@ -13,7 +13,7 @@ def test_list_models(model_repository):
     result = model_repository.list_models(license_='cc-by-nc-4.0')
     assert len(result) == 1
     # get by search query only
-    result = model_repository.list_models(query='cc-by-nc')
+    result = model_repository.list_models(query='cc-by-nc-4.0')
     assert len(result) == 1
     # get by license and architecture
     result = model_repository.list_models(license_='cc-by-nc-4.0', architecture="MistralForCausalLM")
@@ -41,7 +41,7 @@ def test_list_models(model_repository):
     result = model_repository.list_models(query='hola', license_='apache-2.0')
     assert len(result) == 0
     # search query with license
-    result = model_repository.list_models(query='cc-by-nc', license_='cc-by-nc-4.0')
+    result = model_repository.list_models(query='cc-by-nc-4.0', license_='cc-by-nc-4.0')
     assert len(result) == 1
     result = model_repository.list_models(query='MistralForCausalLM', license_='apache-2.0')
     assert len(result) == 5

@@ -37,6 +37,7 @@ class Settings(pds.BaseSettings):
     redis_dsn: pd.RedisDsn = "redis://localhost:6379/0"
     # db settings
     text_index_name: str = "modelDocuments"
+    disable_memgraph_text_search: bool = True
     # logging
     logging_level: t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL'] = "DEBUG"
     rq_logging_level: t.Optional[t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']] = None
