@@ -1,6 +1,7 @@
 import typing as t
 from loguru import logger
 import pydantic as pd
+import pydantic_core as pdc
 import pydantic_settings as pds
 from pathlib import Path
 from utils.logging import set_logger_level
@@ -27,13 +28,11 @@ class Settings(pds.BaseSettings):
     max_graph_depth: t.Optional[int] = 3
     results_limit: t.Optional[int] = None
     # db connection
-    mg_host: str = "localhost"
-    mg_port: int = 7687  # use 7688 for test db
-    mg_username: str = ""
-    mg_password: str = ""
-    mg_encrypted: bool = False
-    mg_client_name: str = "MergeUI"
-    mg_lazy: bool = False
+    database_url: t.Annotated[pdc.Url, pd.UrlConstraints(
+        allowed_schemes=["bolt", "bolt+s", "neo4j", "neo4j+s"],
+        default_host="localhost",
+        default_port=7687,
+    )] = "bolt://localhost:7687"  # use 7688 port for test db
     # redis connection
     redis_dsn: pd.RedisDsn = "redis://localhost:6379/0"
     # db settings
