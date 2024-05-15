@@ -24,7 +24,7 @@ def create_db_connection(settings: 'core.settings.Settings') -> DatabaseClient:
         username=unquote(settings.database_url.username or ""),
         password=unquote(settings.database_url.password or ""),
         encrypted=settings.database_url.scheme.endswith("+s"),
-        client_name=f"{settings.app_name}_{random.randint(0, 500)}",
+        client_name=f"{settings.project_name}_{random.randint(0, 500)}",
     )
     if settings.database_url.scheme.startswith("neo4j"):
         return gq.Neo4j(**args)

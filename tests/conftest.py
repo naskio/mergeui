@@ -16,8 +16,10 @@ def mp_session():
 @pytest.fixture(scope='session', autouse=True)
 def setup_env(mp_session):
     mp_session.setenv("ENV", "test")
-    # mp_session.setenv("DATABASE_URL", "bolt://localhost:7688")  # not working properly
-    mp_session.setattr(core.settings, "settings", core.settings.Settings(database_url="bolt://localhost:7688"))
+    mp_session.setattr(core.settings, "settings", core.settings.Settings(
+        database_url="bolt://localhost:7688",
+        memgraph_text_search_disabled=False,
+    ))
 
 
 @pytest.fixture(scope="session", autouse=True)

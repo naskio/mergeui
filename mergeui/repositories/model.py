@@ -20,14 +20,15 @@ def _get_where_clause(q, where_initiated: bool):
 class ModelRepository(BaseRepository):
     def __init__(self, db_conn: 'DatabaseConnection'):
         self.db_conn = db_conn
-        self.index_dir = db_conn.settings.project_dir / "media" / db_conn.settings.text_index_name
-        self.schema = self._get_schema()
-        self.query_parser = self._get_query_parser()
-        self.index = None
-        self.searcher = None
-        if self.index_dir.exists() and self.index_dir.is_dir():
-            self.index = whi.open_dir(self.index_dir)
-            self.searcher = self.index.searcher()
+        if self.db_conn.settings.memgraph_text_search_disabled:
+            self.index_dir = db_conn.settings.project_dir / "media" / db_conn.settings.text_index_name
+            self.schema = self._get_schema()
+            self.query_parser = self._get_query_parser()
+            self.index = None
+            self.searcher = None
+            if self.index_dir.exists() and self.index_dir.is_dir():
+                self.index = whi.open_dir(self.index_dir)
+                self.searcher = self.index.searcher()
 
     def __del__(self):
         if self.searcher is not None:
@@ -82,7 +83,7 @@ class ModelRepository(BaseRepository):
         # search query
         hits: t.Optional[set[str]] = None
         if query is not None and query.strip() != "":
-            if not self.db_conn.settings.disable_memgraph_text_search:
+            if not self.db_conn.settings.memgraph_text_search_disabled:
                 q = (
                     q.with_(
                         "n",
@@ -109,6 +110,8 @@ class ModelRepository(BaseRepository):
 
     def build_text_search_index(self, reset_if_not_empty: bool = True) -> None:
         """Create text-search index for models in the file system"""
+        if not self.db_conn.settings.memgraph_text_search_disabled:
+            raise NotImplementedError("You need to disable Memgraph text search to use Whoosh text-search.")
         logger.debug("Creating text-search index...")
         if reset_if_not_empty:
             self._reset_text_search_index()
@@ -138,6 +141,8 @@ class ModelRepository(BaseRepository):
 
     def _search_models(self, q_str: str, limit: t.Optional[int] = None) -> set[str]:
         """Search models using the text-search index"""
+        if not self.db_conn.settings.memgraph_text_search_disabled:
+            raise NotImplementedError("You need to disable Memgraph text search to use Whoosh text-search.")
         q_str = q_str.lower() if not self.db_conn.settings.whoosh_case_sensitive else q_str
         q = self.query_parser.parse(q_str)
         logger.trace(f"Parsed Query: {q}")

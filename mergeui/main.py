@@ -6,7 +6,7 @@ from web.api import router as api_router
 settings = get_settings()
 
 app = fa.FastAPI(
-    title=settings.app_name,
+    title=settings.project_name,
     description=f"{settings.description} by {settings.author}",
 )
 
@@ -18,7 +18,7 @@ async def favicon():
     return fa.responses.FileResponse(settings.favicon_path)
 
 
-if not settings.disable_gradio_app:
+if not settings.gradio_app_disabled:
     import gradio as gr
     from web.gradio_app.main import demo
 

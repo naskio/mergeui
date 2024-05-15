@@ -14,16 +14,16 @@ class Settings(pds.BaseSettings):
     model_config = pds.SettingsConfigDict(env_file=PROJECT_DIR / ".env", frozen=True, extra="ignore")
     project_dir: Path = PROJECT_DIR
     # UI settings
-    app_name: str = "MergeUI"
+    project_name: str = "MergeUI"
     description: str = "UI for merged large language models"
     author: t.Optional[str] = None
     email: t.Optional[pd.EmailStr] = None
     repo_url: t.Optional[pd.AnyHttpUrl] = "https://github.com/naskio/mergeui"
     favicon_path: Path = PROJECT_DIR / 'static/brand/favicon.ico'
     # gradio
-    disable_gradio_app: bool = False
-    load_custom_js: bool = True
-    load_custom_css: bool = True
+    gradio_app_disabled: bool = False
+    gradio_load_custom_js: bool = True
+    gradio_load_custom_css: bool = True
     # limit results
     max_graph_depth: t.Optional[int] = 3
     results_limit: t.Optional[int] = None
@@ -37,7 +37,7 @@ class Settings(pds.BaseSettings):
     redis_dsn: pd.RedisDsn = "redis://localhost:6379/0"
     # db settings
     text_index_name: str = "modelDocuments"
-    disable_memgraph_text_search: bool = True
+    memgraph_text_search_disabled: bool = True
     whoosh_case_sensitive: bool = False
     # logging
     logging_level: t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL'] = "DEBUG"

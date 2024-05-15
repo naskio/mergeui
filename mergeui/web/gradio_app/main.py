@@ -32,12 +32,12 @@ DEFAULT_MODEL_ID = model_service.get_default_model_id()
 
 DB_IS_EMPTY = not bool(MODEL_ID_CHOICES)
 
-custom_css = (settings.load_custom_js and (
+custom_css = (settings.gradio_load_custom_css and (
         settings.project_dir / 'static/gradio_app/custom.css').read_text().strip()) or None
-custom_js = (settings.load_custom_js and (
+custom_js = (settings.gradio_load_custom_js and (
         settings.project_dir / 'static/gradio_app/custom.js').read_text().strip()) or None
 
-with gr.Blocks(theme=custom_theme, title=settings.app_name, css=custom_css, js=custom_js) as demo:
+with gr.Blocks(theme=custom_theme, title=settings.project_name, css=custom_css, js=custom_js) as demo:
     with gr.Row():
         with gr.Column(visible=False) as main_page:
             gr.HTML((settings.project_dir / 'static/partials/header.html').read_text())

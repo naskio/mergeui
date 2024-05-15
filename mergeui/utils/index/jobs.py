@@ -24,7 +24,7 @@ def create_redis_connection(settings: Settings) -> redis.Redis:
         db=settings.redis_dsn.path.replace("/", ""),
         username=settings.redis_dsn.username,
         password=settings.redis_dsn.password,
-        client_name=f"{settings.app_name}",
+        client_name=f"{settings.project_name}",
     )
 
 
