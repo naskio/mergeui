@@ -16,8 +16,8 @@ def mp_session():
 @pytest.fixture(scope='session', autouse=True)
 def setup_env(mp_session):
     mp_session.setenv("ENV", "test")
-    # mp_session.setenv("MG_PORT", "7688")  # not working properly
-    mp_session.setattr(core.settings, "settings", core.settings.Settings(mg_port=7688))  # workaround
+    # mp_session.setenv("DATABASE_URL", "bolt://localhost:7688")  # not working properly
+    mp_session.setattr(core.settings, "settings", core.settings.Settings(database_url="bolt://localhost:7688"))
 
 
 @pytest.fixture(scope="session", autouse=True)
