@@ -17,7 +17,7 @@ from utils.nx import load_nx_graph_from_json_file, import_nx_graph_to_db
 
 
 def create_db_connection(settings: 'core.settings.Settings') -> DatabaseClient:
-    logger.debug(f"Creating database connection for {settings.app_name}...")
+    logger.info(f"Creating database connection to {settings.database_url.host}:{settings.database_url.port} ...")
     args = dict(
         host=settings.database_url.host,
         port=settings.database_url.port,
