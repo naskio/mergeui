@@ -71,6 +71,35 @@ def test_get_sub_graph(graph_repository):
     assert len(gr.relationships) == 0
 
 
+def test_get_sub_tree(graph_repository):
+    # top node
+    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron-Starling')
+    assert len(gr.nodes) == 5
+    assert isinstance(gr.nodes[0], gq.Node)
+    assert len(gr.relationships) == 7
+    assert isinstance(gr.relationships[0], gq.Relationship)
+    # isolated node
+    gr = graph_repository.get_sub_tree(start_id='mistralai/Mistral-7B-v0.1')
+    assert len(gr.nodes) == 1
+    assert len(gr.relationships) == 0
+    # invalid node
+    gr = graph_repository.get_sub_tree(start_id='x/y')
+    assert len(gr.nodes) == 0
+    assert len(gr.relationships) == 0
+    # middle node
+    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron')
+    assert len(gr.nodes) == 5
+    assert len(gr.relationships) == 7
+    # bottom node
+    gr = graph_repository.get_sub_tree(start_id='berkeley-nest/Starling-LM-7B-alpha')
+    assert len(gr.nodes) == 5
+    assert len(gr.relationships) == 7
+    # empty id
+    gr = graph_repository.get_sub_tree(start_id='')
+    assert len(gr.nodes) == 0
+    assert len(gr.relationships) == 0
+
+
 def test_count_nodes(graph_repository):
     assert graph_repository.count_nodes() == 6
 

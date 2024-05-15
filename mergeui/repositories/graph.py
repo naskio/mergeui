@@ -73,7 +73,7 @@ class GraphRepository(BaseRepository):
             relationship_type: str = "",
             max_depth: t.Optional[int] = None,
     ) -> Graph:
-        """Get a sub-graph from a starting node"""
+        """Get a sub-graph from a starting node (use this if we want to include siblings)"""
         if not start_id:
             return Graph()
         start_id = escaped(start_id)
@@ -321,3 +321,46 @@ class GraphRepository(BaseRepository):
         if results:
             return results[0].get("count", 0)
         return 0
+
+    def get_sub_tree(
+            self,
+            *,
+            start_id: str,
+            label: str = "",
+            relationship_type: str = "",
+            directed: bool = False,
+            max_depth: t.Optional[int] = None,
+    ) -> Graph:
+        """Get a Sub-Tree from a starting node (use this if we don't want to include siblings)"""
+        if not start_id:
+            return Graph()
+        start_id = escaped(start_id)
+        rel_var = ""
+        if relationship_type:
+            rel_var = f"{rel_var}:{relationship_type}"
+        rel_var = f"{rel_var}*"
+        if max_depth is not None:
+            rel_var = f"{rel_var}..{max_depth}"
+        q = (
+            gq.match(connection=self.db_conn.db)
+            .add_custom_cypher("path = ")
+            .node(label, id=start_id)
+            .to(variable=rel_var, directed=directed)
+            .node(label)
+            .with_("nodes(path) as all_nodes, relationships(path) as all_rels")
+            .unwind("all_nodes", variable="node")
+            .unwind("all_rels", variable="rel")
+            .with_("COLLECT(DISTINCT node) as distinct_nodes, COLLECT(DISTINCT rel) as distinct_rels")
+            .return_("distinct_nodes as nodes, distinct_rels as relationships")
+        )
+        results = execute_query(q)
+        gr = _results_as_graph(results)
+        if not gr.nodes:  # handle isolated node or empty graph
+            q = (
+                gq.match(connection=self.db_conn.db)
+                .node(label, variable="n", id=start_id)
+                .return_("COLLECT(DISTINCT n) AS nodes, [] AS relationships")
+            )
+            results = execute_query(q)
+            gr = _results_as_graph(results)
+        return gr
