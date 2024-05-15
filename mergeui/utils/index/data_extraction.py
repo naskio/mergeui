@@ -282,6 +282,7 @@ def extract_base_models_from_card_data(card_data: dict) -> set[str]:
 def extract_base_models_from_tags(tags: list[str]) -> set[str]:
     base_models = set([tag.replace('base_model:', '') for tag in tags if tag.startswith('base_model:')])
     if any(mtag in tags for mtag in ["merge", "mergekit", "lazymergekit"]):
+        # TODO: handle case of quantized models, using len()?
         return base_models
     if len(base_models) < 2:
         return set()
