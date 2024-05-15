@@ -4,6 +4,7 @@ from loguru import logger
 import datetime as dt
 from pathlib import Path
 import gqlalchemy as gq
+from gqlalchemy.vendors.database_client import DatabaseClient
 import networkx as nx
 import time
 import core.settings
@@ -14,17 +15,22 @@ from utils.types import get_fields_from_class
 from utils.nx import load_nx_graph_from_json_file, import_nx_graph_to_db
 
 
-def create_db_connection(settings: 'core.settings.Settings') -> gq.Memgraph:
+def create_db_connection(settings: 'core.settings.Settings') -> DatabaseClient:
     logger.debug(f"Creating database connection for {settings.app_name}...")
-    return gq.Memgraph(
-        host=settings.mg_host,
-        port=settings.mg_port,
-        username=settings.mg_username,
-        password=settings.mg_password,
-        encrypted=settings.mg_encrypted,
-        client_name=f"{settings.mg_client_name}_{random.randint(0, 500)}",
-        lazy=settings.mg_lazy,
+    args = dict(
+        host=settings.database_url.host,
+        port=settings.database_url.port,
+        username=settings.database_url.username or "",
+        password=settings.database_url.password or "",
+        encrypted=settings.database_url.scheme.endswith("+s"),
+        client_name=f"{settings.app_name}_{random.randint(0, 500)}",
     )
+    if settings.database_url.scheme.startswith("bolt"):
+        return gq.Memgraph(
+            **args,
+            lazy=False,
+        )
+    return gq.Neo4j(**args)
 
 
 def auto_retry_query(*, max_tries: t.Optional[int] = 10, delay: t.Optional[float] = None):
@@ -69,9 +75,9 @@ def execute_query(q):
 
 
 class DatabaseConnection(BaseDatabaseConnection):
-    # for import_from_cypher_file, export_to_cypher_file: use Memgraph Lab UI
+    # for import_from_cypher_file, export_to_cypher_file: use UI
     settings: 'core.settings.Settings'
-    db: gq.Memgraph
+    db: DatabaseClient
 
     def __init__(self, settings: 'core.settings.Settings'):
         self.settings = settings

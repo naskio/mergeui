@@ -2,7 +2,7 @@ import json
 from loguru import logger
 from pathlib import Path
 import networkx as nx
-import gqlalchemy as gq
+from gqlalchemy.vendors.database_client import DatabaseClient
 from gqlalchemy.transformations.translators.nx_translator import NxTranslator
 from utils import log_progress
 
@@ -58,7 +58,7 @@ def load_nx_graph_from_json_file(json_path: Path) -> nx.Graph:
     return graph
 
 
-def get_nx_translator(db: gq.Memgraph) -> NxTranslator:
+def get_nx_translator(db: DatabaseClient) -> NxTranslator:
     return NxTranslator(
         host=db.host,
         port=db.port,
@@ -66,11 +66,10 @@ def get_nx_translator(db: gq.Memgraph) -> NxTranslator:
         password=db._password,
         encrypted=db._encrypted,
         client_name=db._client_name,
-        lazy=db._lazy,
     )
 
 
-def import_nx_graph_to_db(graph: nx.Graph, db: gq.Memgraph) -> None:
+def import_nx_graph_to_db(graph: nx.Graph, db: DatabaseClient) -> None:
     logger.info("Importing graph...")
     translator = get_nx_translator(db)
     queries = list(translator.to_cypher_queries(graph))
@@ -86,7 +85,7 @@ def import_nx_graph_to_db(graph: nx.Graph, db: gq.Memgraph) -> None:
         logger.warning(f"Nothing to import")
 
 
-def export_db_as_nx_graph(db: gq.Memgraph) -> nx.Graph:
+def export_db_as_nx_graph(db: DatabaseClient) -> nx.Graph:
     logger.info("Exporting graph...")
     translator = get_nx_translator(db)
     # NB: doesn't support multiple edges between nodes (only one exported if we have multiple edges between nodes)
