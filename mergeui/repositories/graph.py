@@ -71,25 +71,25 @@ class GraphRepository(BaseRepository):
             start_id: str,
             label: str = "",
             relationship_type: str = "",
-            max_depth: t.Optional[int] = None,
+            directed: bool = False,
+            max_hops: t.Optional[int] = None,
     ) -> Graph:
         """Get a sub-graph from a starting node (use this if we want to include siblings)"""
         if not start_id:
             return Graph()
         start_id = escaped(start_id)
-        # get nodes
-        q = (gq.match(connection=self.db_conn.db)
-             .node(label, variable="n", id=start_id))
+        rel_var = ""
         if relationship_type:
-            rel_var = f"r:{relationship_type}"
-        else:
-            rel_var = "r"
-        if max_depth is not None:
-            q = q.to(variable=f"{rel_var}*..{max_depth}", directed=False)
-        else:
-            q = q.to(variable=f"{rel_var}*", directed=False)
+            rel_var = f"{rel_var}:{relationship_type}"
+        rel_var = f"{rel_var}*"
+        if max_hops is not None:
+            rel_var = f"{rel_var}..{max_hops}"
+        # get nodes
         q = (
-            q.node(label, variable="m")
+            gq.match(connection=self.db_conn.db)
+            .node(label, variable="n", id=start_id)
+            .to(variable=rel_var, directed=directed)
+            .node(label, variable="m")
             .with_("COLLECT(n)+COLLECT(m) AS all_nodes")
             .unwind("all_nodes", variable="node")
             .with_("COLLECT(DISTINCT node) AS distinct_nodes")
@@ -329,7 +329,7 @@ class GraphRepository(BaseRepository):
             label: str = "",
             relationship_type: str = "",
             directed: bool = False,
-            max_depth: t.Optional[int] = None,
+            max_hops: t.Optional[int] = None,
     ) -> Graph:
         """Get a Sub-Tree from a starting node (use this if we don't want to include siblings)"""
         if not start_id:
@@ -339,8 +339,8 @@ class GraphRepository(BaseRepository):
         if relationship_type:
             rel_var = f"{rel_var}:{relationship_type}"
         rel_var = f"{rel_var}*"
-        if max_depth is not None:
-            rel_var = f"{rel_var}..{max_depth}"
+        if max_hops is not None:
+            rel_var = f"{rel_var}..{max_hops}"
         q = (
             gq.match(connection=self.db_conn.db)
             .add_custom_cypher("path = ")
