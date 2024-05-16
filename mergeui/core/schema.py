@@ -99,7 +99,7 @@ BaseValidationError = t.Union[pydantic.ValidationError, ValueError, AssertionErr
 
 SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated",
 "average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
-ExcludeOptionType = t.Literal["base models", "merged models"]
+ExcludeOptionType = t.Literal["private", "gated", "base models", "merged models"]
 MergeMethodType = t.Literal["linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
 "breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
 
