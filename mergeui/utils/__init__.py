@@ -71,7 +71,7 @@ def pretty_format_description(description: t.Optional[str], private: bool, is_va
 
 def is_valid_repo_id(repo_id: str) -> bool:
     """Check if str a valid repo_id with namespace/repo_name format."""
-    return bool(re.match(r"^[-.\w]+/[-.\w]+$", repo_id))
+    return bool(re.match(r"^[a-zA-Z0-9-]+/[a-zA-Z0-9-._]+$", repo_id))
 
 
 def titlify(s: t.Optional[str]) -> t.Optional[str]:

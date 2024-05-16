@@ -15,8 +15,17 @@ def invalid_repo_ids() -> list[str]:
         "/media/data5/hf_models/Mistral-7B-Merge-14-v0.3",
         "/media/data5/hf_models/OpenHermes-2.5-neural-chat-v3-3-openchat-3.5-1210-Slerp",
         r"D:\Learning Centre\GenAI\LLM Leaderboard\2024042801\mergekit-main\models\Calme-7B-Instruct-v0.9",
+        r"D:\Qwen\Qwen1.5-72B-Chat",
         "jeiku/Average_Normie_v2_l3_8B+ResplendentAI/Smarts_Llama3",
-        "/content/drive/MyDrive/WestLake"
+        "/content/drive/MyDrive/WestLake",
+        "./Qwen1.5-72B-Chat",
+        "./primordial_slop_c",
+        "cetherald-base",
+        "Undi95/Llama-3-Unholy-8B+ResplendentAI/BlueMoon_Llama3",
+        "/Users/jsarnecki/opt/workspace/NousResearch/Hermes-2-Pro-Mistral-7B",
+        "Mixtral_AI_MegaTron",
+        "erotica",
+        "bigger",
     ]
 
 
@@ -27,6 +36,7 @@ def valid_repo_ids() -> list[str]:
         "LeroyDyer/Mixtral_AI_128k",  # gated and moved
         "meta-llama/Meta-Llama-3-8B",  # gated
         "nbeerbower/flammen22C-mistral-7B",  # moved
+        "Mergekit/llama3-SOVL-v1",  # not found
     ]
 
 
