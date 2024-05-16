@@ -110,8 +110,11 @@ class DatabaseConnection(BaseDatabaseConnection):
         """Add indexes relevant after populating the database."""
         # property indexes
         self.db.create_index(gq.MemgraphIndex("Model", property="license"))
+        self.db.create_index(gq.MemgraphIndex("Model", property="author"))
         self.db.create_index(gq.MemgraphIndex("Model", property="merge_method"))
         self.db.create_index(gq.MemgraphIndex("Model", property="architecture"))
+        self.db.create_index(gq.MemgraphIndex("Model", property="private"))
+        self.db.create_index(gq.MemgraphIndex("Model", property="gated"))
         # edge indexes
         self.db.execute(f"CREATE EDGE INDEX ON :DERIVED_FROM")
         # text index
