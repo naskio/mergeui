@@ -10,6 +10,12 @@ def test_get_license_choices(model_service):
     assert None not in result
 
 
+def test_get_author_choices(model_service):
+    result = model_service.get_author_choices()
+    assert 'Q-bert' in result
+    assert None not in result
+
+
 def test_get_merge_method_choices(model_service):
     result = model_service.get_merge_method_choices()
     assert 'slerp' in result
@@ -23,10 +29,7 @@ def test_get_architecture_choices(model_service):
 
 
 def test_get_model_lineage(model_service):
-    result = model_service.get_model_lineage(
-        model_id='fblgit/una-cybertron-7b-v2-bf16',
-        max_depth=None,
-    )
+    result = model_service.get_model_lineage(model_id='fblgit/una-cybertron-7b-v2-bf16')
     assert len(result.nodes) == 5
     assert len(result.relationships) == 7
 

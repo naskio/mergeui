@@ -31,8 +31,9 @@ class ModelRepository(BaseRepository):
                 self.searcher = self.index.searcher()
 
     def __del__(self):
-        if self.searcher is not None:
-            self.searcher.close()
+        if self.db_conn.settings.memgraph_text_search_disabled:
+            if self.searcher is not None:
+                self.searcher.close()
 
     def list_models(
             self,

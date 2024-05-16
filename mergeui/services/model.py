@@ -14,12 +14,15 @@ class ModelService(BaseService):
             self,
             *,
             model_id: str,
-            max_depth: t.Optional[int] = None,
+            directed: bool = False,
+            max_hops: t.Optional[int] = None,
     ) -> 'core.schema.Graph':
-        return self.gr.get_sub_graph(
+        return self.gr.get_sub_tree(
             start_id=model_id,
             label="Model",
-            max_depth=max_depth,
+            relationship_type="DERIVED_FROM",
+            directed=directed,
+            max_hops=max_hops,
         )
 
     def list_models(
@@ -78,6 +81,9 @@ class ModelService(BaseService):
 
     def get_license_choices(self) -> list[str]:
         return self.gr.list_property_values(key="license", exclude_none=True, sort_by="count")
+
+    def get_author_choices(self) -> list[str]:
+        return self.gr.list_property_values(key="author", exclude_none=True, sort_by="count")
 
     def get_merge_method_choices(self) -> list[str]:
         return self.gr.list_property_values(key="merge_method", exclude_none=True, sort_by="count")

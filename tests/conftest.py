@@ -17,6 +17,8 @@ def mp_session():
 def setup_env(mp_session):
     mp_session.setenv("ENV", "test")
     mp_session.setattr(core.settings, "settings", core.settings.Settings(
+        max_hops=None,
+        max_results=None,
         database_url="bolt://localhost:7688",
         memgraph_text_search_disabled=False,
     ))
