@@ -34,7 +34,7 @@ def create_db_connection(settings: 'core.settings.Settings') -> DatabaseClient:
     )
 
 
-def auto_retry_query(*, max_tries: t.Optional[int] = 10, delay: t.Optional[float] = None):
+def auto_retry_query(*, max_tries: t.Optional[int] = 2, delay: t.Optional[float] = None):
     """Decorator factory for auto-retrying query execution on DatabaseError."""
 
     def decorator(func):
@@ -67,7 +67,7 @@ def auto_retry_query(*, max_tries: t.Optional[int] = 10, delay: t.Optional[float
     return decorator
 
 
-@auto_retry_query()
+@auto_retry_query(max_tries=3, delay=3)
 def execute_query(q):
     result = q.execute()
     if isinstance(result, t.Iterator):
