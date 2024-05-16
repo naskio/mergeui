@@ -19,28 +19,28 @@ class Model(gq.Node):
     id: str  # = gq.Field(index=True, exists=True, unique=True, db=get_db_connection().db)  # manage manually
     url: t.Optional[str]  # pydantic.AnyHttpUrl can't be used
     name: t.Optional[str]
+    author: t.Optional[str]
     description: t.Optional[str]
     license: t.Optional[str]
-    author: t.Optional[str]
     merge_method: t.Optional[str] = gq.Field(title="merge strategy")  # t.Optional[MergeMethodType] can't be used
     architecture: t.Optional[str]
     likes: t.Optional[int]
     downloads: t.Optional[int]
     created_at: t.Optional[dt.datetime]
     updated_at: t.Optional[dt.datetime]
+    # repo status
+    private: t.Optional[bool] = gq.Field(repr=False)
+    gated: t.Optional[bool] = gq.Field(repr=False)
+    disabled: t.Optional[bool] = gq.Field(repr=False)
     # evaluation
+    average_score: t.Optional[float]
     arc_score: t.Optional[float] = gq.Field(title="ARC")
     hella_swag_score: t.Optional[float] = gq.Field(title="HellaSwag")
     mmlu_score: t.Optional[float] = gq.Field(title="MMLU")
     truthfulqa_score: t.Optional[float] = gq.Field(title="TruthfulQA")
     winogrande_score: t.Optional[float] = gq.Field(title="Winogrande")
     gsm8k_score: t.Optional[float] = gq.Field(title="GSM8K")
-    average_score: t.Optional[float]
     evaluated_at: t.Optional[dt.datetime]
-    # repo status
-    private: t.Optional[bool] = gq.Field(repr=False)
-    disabled: t.Optional[bool] = gq.Field(repr=False)
-    gated: t.Optional[bool] = gq.Field(repr=False)
     # technical
     indexed: t.Optional[bool] = gq.Field(repr=False)
     indexed_at: t.Optional[dt.datetime] = gq.Field(repr=False)
