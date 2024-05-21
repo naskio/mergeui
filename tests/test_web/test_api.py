@@ -5,7 +5,7 @@ from web.api import router as api_router
 
 
 @pytest.fixture(scope="module")
-def api_client(db_conn) -> TestClient:
+def api_client(model_service) -> TestClient:
     app = fa.FastAPI()
     app.include_router(api_router, prefix="/api")
     return TestClient(app)
@@ -45,7 +45,8 @@ def test_list_models__columns(api_client):
 
 
 def test_model_lineage(api_client):
-    response = api_client.get("/api/model_lineage", params={"id": "Q-bert/MetaMath-Cybertron-Starling"})
+    response = api_client.get("/api/model_lineage", params={
+        "id": "Q-bert/MetaMath-Cybertron-Starling", "max_hops": 3, "directed": False})
     assert response.status_code == 200
     data = response.json()
     assert data.get("success") is True
