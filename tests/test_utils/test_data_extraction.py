@@ -2,10 +2,11 @@ import pytest
 from huggingface_hub import hf_api
 from utils import parse_yaml, is_valid_repo_id
 from utils.index.data_extraction import get_data_origin, list_model_infos, get_model_info, \
-    download_file_from_hf, extract_urls_from_text, download_mergekit_config, download_readme, load_model_card, \
+    download_file_from_hf, download_mergekit_config, download_readme, load_model_card, \
     extract_base_models_from_mergekit_config, extract_merge_method_from_mergekit_config, \
     extract_base_models_from_card_data, extract_license_from_card_data, extract_base_models_from_tags, \
-    extract_card_data_string_from_readme, extract_mergekit_configs_string_from_readme
+    extract_card_data_string_from_readme, extract_mergekit_configs_string_from_readme, \
+    extract_repo_url_from_gated_repo_error
 
 
 # ##### Hub #####
@@ -370,11 +371,17 @@ def test_extract_license_from_card_data(parsed_card_data):
 
 
 # ##### Helpers #####
-def test_extract_urls_from_text():
-    expected = [
-        "https://huggingface.co/meta-llama/Meta-Llama-3-8B",
-    ]
-    assert extract_urls_from_text(
-        "Access to model meta-llama/Meta-Llama-3-8B is restricted and you are not in the authorized list. "
-        "Visit https://huggingface.co/meta-llama/Meta-Llama-3-8B to ask for access.") == expected
+def test_extract_repo_url_from_gated_repo_error():
+    import requests
+    mocked_response = requests.Response()
+    mocked_response.status_code = 403
+    mocked_response._content = (b'{"error":"Access to model meta-llama/Meta-Llama-3-8B is restricted and '
+                                b'you are not in the authorized list. '
+                                b'Visit https://huggingface.co/meta-llama/Meta-Llama-3-8B to ask for access."}')
+    expected = hf_api.RepoUrl("meta-llama/Meta-Llama-3-8B")
+    assert extract_repo_url_from_gated_repo_error(hf_api.GatedRepoError("Test", mocked_response)) == expected
+    mocked_response._content = (b'{"error":"Access to model LeroyDyer/Mixtral_AI_128k_Base is restricted. '
+                                b'You must be authenticated to access it."}')
+    expected = hf_api.RepoUrl("LeroyDyer/Mixtral_AI_128k_Base")
+    assert extract_repo_url_from_gated_repo_error(hf_api.GatedRepoError("Test", mocked_response)) == expected
 # ##### Helpers #####
