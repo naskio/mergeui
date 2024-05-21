@@ -1,5 +1,6 @@
 import typing as t
 import gqlalchemy as gq
+# noinspection PyProtectedMember
 from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
@@ -104,16 +105,14 @@ class GraphRepository(BaseRepository):
             .with_("COLLECT(DISTINCT rel) AS distinct_rels, distinct_nodes")
             .return_("distinct_nodes AS nodes, distinct_rels as relationships")
         )
-        results = execute_query(q)
-        gr = _results_as_graph(results)
+        gr = _results_as_graph(execute_query(q))
         if not gr.nodes:  # handle isolated node or empty graph
             q = (
                 gq.match(connection=self.db_conn.db)
                 .node(label, variable="n", id=start_id)
                 .return_("COLLECT(DISTINCT n) AS nodes, [] AS relationships")
             )
-            results = execute_query(q)
-            gr = _results_as_graph(results)
+            gr = _results_as_graph(execute_query(q))
         return gr
 
     def set_properties(
@@ -176,7 +175,7 @@ class GraphRepository(BaseRepository):
     ) -> None:
         """
         Merge node src into node dst (properties and relationships are preserved)
-        - if dst doesn't exist, just update src.id if it exists else do nothing
+        - if dst doesn't exist, just update 'src.id' if it exists else do nothing
         - if dst exists and src doesn't exist, do nothing
         - if both exist:
         - move all incoming relationships of src to dst
