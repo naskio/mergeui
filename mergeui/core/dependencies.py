@@ -1,35 +1,37 @@
-from functools import lru_cache
+import functools as fts
 import core.settings
 from core.db import DatabaseConnection
 from repositories import GraphRepository, ModelRepository
 from services import ModelService
+from utils.logging import set_logger_level
 
 
-@lru_cache
+@fts.cache
 def get_settings() -> 'core.settings.Settings':
-    return core.settings.settings
+    settings = core.settings.Settings()
+    set_logger_level(settings.logging_level)
+    return settings
 
 
-@lru_cache
+@fts.cache
 def get_db_connection():
     settings = get_settings()
     return DatabaseConnection(settings)
 
 
-@lru_cache
+@fts.cache
 def get_graph_repository() -> GraphRepository:
-    db_conn = get_db_connection()
-    return GraphRepository(db_conn)
+    return GraphRepository(get_db_connection())
 
 
-@lru_cache
+@fts.cache
 def get_model_repository() -> ModelRepository:
-    db_conn = get_db_connection()
-    return ModelRepository(db_conn)
+    repo = ModelRepository(get_db_connection())
+    if get_settings().memgraph_text_search_disabled:
+        repo.create_text_search_index()
+    return repo
 
 
-@lru_cache
+@fts.cache
 def get_model_service() -> ModelService:
-    gr = get_graph_repository()
-    mr = get_model_repository()
-    return ModelService(graph_repository=gr, model_repository=mr)
+    return ModelService(graph_repository=get_graph_repository(), model_repository=get_model_repository())
