@@ -103,6 +103,7 @@ def get_model_info(model_id: str, include_gated: bool = True, include_moved: boo
     include_moved=True => get model_info also if the repo has been moved/renamed
     """
     logger.debug(f"Getting model info for {model_id}...")
+    # noinspection PyProtectedMember
     try:
         retrieve_model_info = hf_api.model_info(model_id)
         logger.debug(f"Model info for {model_id} retrieved")
@@ -111,10 +112,8 @@ def get_model_info(model_id: str, include_gated: bool = True, include_moved: boo
         if include_gated:  # handle gated repo
             namespace, repo_name = model_id.split("/")
             if include_moved:  # handle renamed repo
-                err = e.response.json().get("error", "")
-                urls = extract_urls_from_text(err)
-                if urls:
-                    repo_url: hf_api.RepoUrl = hf_api.RepoUrl(urls[0])
+                repo_url = extract_repo_url_from_gated_repo_error(e)
+                if repo_url:
                     model_id = repo_url.repo_id
                     namespace, repo_name = repo_url.namespace, repo_url.repo_name
             # fallback to listing
@@ -128,7 +127,7 @@ def get_model_info(model_id: str, include_gated: bool = True, include_moved: boo
             possible_models = list_model_infos(**list_params)
             for pm in possible_models:
                 if pm.id == model_id:
-                    # pm.gated = True # could be a string "auto", ...
+                    # pm.gated = True # could be a string "auto", "manual" ...
                     return pm, get_data_origin(**list_params)
             logger.debug(f"Model {model_id} not found in listing")
         logger.debug(f"Model {model_id} is in a gated repository")
@@ -219,12 +218,15 @@ def load_model_card(path_or_id: t.Union[hf_api.ModelInfo, Path, str]) -> t.Optio
 
 def hf_whoami() -> None:
     """log currently logged user to HF API."""
-    user = hf_api.whoami()
-    name = (user or {}).get("name")
+    try:
+        user = hf_api.whoami()
+        name = (user or {}).get("name")
+    except hf.errors.LocalTokenNotFoundError:
+        name = None
     if name:
         logger.success(f"Logged In to HuggingFace as {name}")
     else:
-        logger.warning(f"Not Logged In to HuggingFace")
+        logger.warning(f"Not Logged In to HuggingFace, please use `huggingface-cli login` or `huggingface_hub.login`")
 
 
 # ##### Hub #####
@@ -281,7 +283,7 @@ def extract_base_models_from_card_data(card_data: dict) -> set[str]:
 
 def extract_base_models_from_tags(tags: list[str]) -> set[str]:
     base_models = set([tag.replace('base_model:', '') for tag in tags if tag.startswith('base_model:')])
-    if any(mtag in tags for mtag in ["merge", ]):
+    if any(m_tag in tags for m_tag in ["merge", ]):
         return base_models
     return set()
 
@@ -453,7 +455,7 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
     scores["winogrande_score"] = results.get("harness|winogrande|5", {}).get("acc")
     # gsm8k
     scores["gsm8k_score"] = results.get("harness|gsm8k|5", {}).get("acc")
-    # filter None and NaN values => IAFrance/ECE-TW3-JRGL-VHF9
+    # filter None and NaN values
     scores = {k: v for k, v in scores.items() if isinstance(v, float) and not math.isnan(v)}
     # average
     if len(scores) > 0:
@@ -470,11 +472,11 @@ def extract_benchmark_results_from_dataset(model_id: str, dataset_folder: Path) 
 
 
 # ##### Helpers #####
-
-
-def extract_urls_from_text(text: str) -> list[str]:
-    """Extract URLs from text."""
-    return re.findall(r'(https?://\S+)', text)
+def extract_repo_url_from_gated_repo_error(e: hf_api.GatedRepoError) -> t.Optional[hf_api.RepoUrl]:
+    """Extract repo_url from a gated repo error."""
+    found = re.search(r'Access to model ([a-zA-Z0-9-]+/[a-zA-Z0-9-._]+) is restricted', e.response.text)
+    if found:
+        return hf_api.RepoUrl(found.group(1))
 
 
 def extract_card_data_string_from_readme(readme: str) -> t.Optional[str]:
