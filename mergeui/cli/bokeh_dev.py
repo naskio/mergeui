@@ -1,3 +1,4 @@
+import random
 from bokeh.io import curdoc
 from core.settings import Settings
 from core.dependencies import get_settings, get_model_service
@@ -14,7 +15,8 @@ model_id: str = "Q-bert/MetaMath-Cybertron"  # full graph
 
 graph: Graph = model_service.get_model_lineage(
     model_id=model_id,
-    max_depth=settings.max_graph_depth,
+    directed=False,
+    max_hops=min(random.choice(range(1, settings.max_hops + 1)), 2),
 )
 
 selected_id = model_id
