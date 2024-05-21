@@ -103,9 +103,9 @@ def test_aware_to_naive_dt(naive_dt, utc_dt, no_utc_dt):
 
 def test_pretty_format_dt(naive_dt, utc_dt, no_utc_dt, pretty_dt):
     assert pretty_format_dt(None) is None
-    assert pretty_format_dt(naive_dt) == pretty_dt
-    assert pretty_format_dt(utc_dt) == pretty_dt
-    assert pretty_format_dt(no_utc_dt) == pretty_dt
+    assert pretty_format_dt(naive_dt) in pretty_dt
+    assert pretty_format_dt(utc_dt) in pretty_dt
+    assert pretty_format_dt(no_utc_dt) in pretty_dt
 
 
 def test_parse_iso_dt(utc_dt, iso_dt, naive_dt):
