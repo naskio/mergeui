@@ -61,14 +61,15 @@ def pretty_format_float(f_: t.Optional[float], suffix: str = "", as_float: bool 
         return f"{res}{suffix}"
 
 
-def pretty_format_description(description: t.Optional[str], private: bool, is_valid_id: bool) -> t.Optional[str]:
+def pretty_format_description(description: t.Optional[str], private: bool, is_valid_id: bool, max_length: int = 96) \
+        -> str:
     """Format model description for visualisation."""
     if not description:
         if not is_valid_id:
-            return "Not available on HuggingFace and seems to be a local (#) model."
-        if private:
-            return "Not available on HuggingFace and seems to be a private or deleted model."
-    return description
+            description = "Not available on HuggingFace and seems to be a local (#) model."
+        elif private:
+            description = "Not available on HuggingFace and seems to be a private or deleted model."
+    return textwrap.shorten(description, width=max_length, placeholder="...") if description else ""
 
 
 def is_valid_repo_id(repo_id: str) -> bool:
