@@ -8,9 +8,6 @@ import rq
 import huggingface_hub as hf
 from huggingface_hub import hf_api
 import gqlalchemy as gq
-import core.settings
-import core.db
-import repositories
 from core.dependencies import get_settings, get_graph_repository
 from utils import filter_none, custom_serializer, log_progress, format_duration
 from utils.index.data_extraction import list_model_infos, hf_whoami
@@ -45,7 +42,7 @@ def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = T
 def index_models(limit: t.Optional[int], local_files_only: bool = False) -> dict:
     """Index All models from the HuggingFace Hub"""
     nodes_map, rels_list = {}, []
-    settings: 'core.settings.Settings' = get_settings()
+    settings = get_settings()
     r = create_redis_connection(settings)
     q = rq.Queue(connection=r)
     # logging whoami
@@ -163,7 +160,7 @@ def main(
     start_time = time.time()
     limit = int(limit) if limit is not None else limit
     settings = get_settings()
-    repository: 'repositories.GraphRepository' = get_graph_repository()
+    repository = get_graph_repository()
     # setup
     if reset_db:
         repository.db_conn.reset()
