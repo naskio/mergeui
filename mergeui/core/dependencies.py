@@ -28,7 +28,7 @@ def get_graph_repository() -> GraphRepository:
 def get_model_repository() -> ModelRepository:
     repo = ModelRepository(get_db_connection())
     if get_settings().memgraph_text_search_disabled:
-        repo.create_text_search_index()
+        repo.create_text_search_index(False)
     return repo
 
 
