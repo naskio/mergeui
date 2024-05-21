@@ -39,6 +39,7 @@ class Settings(pds.BaseSettings):
     whoosh_case_sensitive: bool = False
     # indexing
     redis_dsn: pd.RedisDsn = "redis://localhost:6379/0"
+    hf_hub_enable_hf_transfer: bool = False
     # logging
     logging_level: t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL'] = "DEBUG"
     rq_logging_level: t.Optional[t.Literal['TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL']] = None

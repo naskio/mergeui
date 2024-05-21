@@ -142,3 +142,13 @@ def escaped(d: t.Optional[t.Union[dict, str]]) -> t.Optional[t.Union[dict, str]]
     if isinstance(d, dict):
         return {k: escaped(v) for k, v in d.items()}
     return d
+
+
+def set_env_var(env_var: str, value: t.Any) -> None:
+    """Set environment variable."""
+    if value is not None:
+        if isinstance(value, bool):
+            value = 1 if value else 0
+        os.environ[env_var] = str(value)
+    else:
+        os.environ.pop(env_var, None)
