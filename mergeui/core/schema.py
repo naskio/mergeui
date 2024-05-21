@@ -33,13 +33,13 @@ class Model(gq.Node):
     gated: t.Optional[bool] = gq.Field(repr=False)
     disabled: t.Optional[bool] = gq.Field(repr=False)
     # evaluation
-    average_score: t.Optional[float]
     arc_score: t.Optional[float] = gq.Field(title="ARC")
     hella_swag_score: t.Optional[float] = gq.Field(title="HellaSwag")
     mmlu_score: t.Optional[float] = gq.Field(title="MMLU")
     truthfulqa_score: t.Optional[float] = gq.Field(title="TruthfulQA")
     winogrande_score: t.Optional[float] = gq.Field(title="Winogrande")
     gsm8k_score: t.Optional[float] = gq.Field(title="GSM8K")
+    average_score: t.Optional[float]
     evaluated_at: t.Optional[dt.datetime]
     # technical
     indexed: t.Optional[bool] = gq.Field(repr=False)
@@ -97,10 +97,12 @@ class DerivedFrom(gq.Relationship, type="DERIVED_FROM"):
 
 BaseValidationError = t.Union[pydantic.ValidationError, ValueError, AssertionError]
 
-SortByOptionType = t.Literal["default", "most likes", "most downloads", "recently created", "recently updated",
-"average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
+SortByOptionType = t.Literal[
+    "default", "most likes", "most downloads", "recently created", "recently updated",
+    "average score", "ARC", "HellaSwag", "MMLU", "TruthfulQA", "Winogrande", "GSM8k"]
 ExcludeOptionType = t.Literal["private", "gated", "base models", "merged models"]
-MergeMethodType = t.Literal["linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
-"breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
+MergeMethodType = t.Literal[
+    "linear", "slerp", "task_arithmetic", "ties", "dare_ties", "dare_linear", "passthrough",
+    "breadcrumbs", "breadcrumbs_ties", "model_stock", "other"]
 
 DisplayColumnType = create_literal_type(Model.display_fields())
