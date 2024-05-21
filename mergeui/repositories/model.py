@@ -21,7 +21,7 @@ class ModelRepository(BaseRepository):
     def __init__(self, db_conn: 'DatabaseConnection'):
         self.db_conn = db_conn
         self.settings = db_conn.settings
-        self.index_dir = db_conn.settings.project_dir / "media" / db_conn.settings.text_index_name
+        self.index_dir = self.settings.project_dir / "media" / self.settings.text_index_name
         self.schema = self._get_schema()
         if self.settings.memgraph_text_search_disabled:
             self.query_parser = self._get_query_parser()
