@@ -3,6 +3,7 @@ import core.settings
 from core.db import DatabaseConnection
 from repositories import GraphRepository, ModelRepository
 from services import ModelService
+from utils import set_env_var
 from utils.logging import set_logger_level
 
 
@@ -10,6 +11,7 @@ from utils.logging import set_logger_level
 def get_settings() -> 'core.settings.Settings':
     settings = core.settings.Settings()
     set_logger_level(settings.logging_level)
+    set_env_var('HF_HUB_ENABLE_HF_TRANSFER', settings.hf_hub_enable_hf_transfer)
     return settings
 
 

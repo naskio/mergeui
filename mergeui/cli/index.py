@@ -9,7 +9,7 @@ import huggingface_hub as hf
 from huggingface_hub import hf_api
 import gqlalchemy as gq
 from core.dependencies import get_settings, get_db_connection, get_graph_repository
-from utils import filter_none, custom_serializer, log_progress, format_duration, set_env_var
+from utils import filter_none, custom_serializer, log_progress, format_duration
 from utils.index.data_extraction import list_model_infos, hf_whoami
 from utils.index.jobs import index_model_by_id, create_redis_connection
 
@@ -48,9 +48,7 @@ def index_models(limit: t.Optional[int], local_files_only: bool = False) -> dict
     # logging whoami
     hf_whoami()
     # download dataset
-    hf_transfer_key = 'HF_HUB_ENABLE_HF_TRANSFER'
-    set_env_var(hf_transfer_key, settings.hf_hub_enable_hf_transfer)
-    logger.debug(f"Downloading dataset: {hf_transfer_key}={os.environ.get(hf_transfer_key)}"
+    logger.debug(f"Downloading dataset: HF_HUB_ENABLE_HF_TRANSFER={os.environ.get('HF_HUB_ENABLE_HF_TRANSFER')}"
                  f" and local_files_only={local_files_only}...")
     results_dataset_folder: str = hf.snapshot_download(
         repo_id='open-llm-leaderboard/results',
