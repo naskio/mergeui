@@ -2,9 +2,12 @@ from rq import Worker
 from core.dependencies import get_settings, get_graph_repository
 from loguru import logger
 from utils.index.jobs import create_redis_connection
-# preload modules
+# preloading modules...
+# noinspection PyUnresolvedReferences
 import huggingface_hub as hf
+# noinspection PyUnresolvedReferences
 from huggingface_hub import hf_api
+# noinspection PyUnresolvedReferences
 import utils.index.jobs
 
 
