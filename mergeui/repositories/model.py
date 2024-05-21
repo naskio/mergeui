@@ -1,5 +1,6 @@
 import typing as t
 import shutil
+import re
 import gqlalchemy as gq
 from loguru import logger
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
@@ -71,7 +72,8 @@ class ModelRepository(BaseRepository):
         hits: t.Optional[set[str]] = None
         if query is not None and query.strip() != "":
             if not self.settings.memgraph_text_search_disabled:
-                query = escaped(query)
+                # https://quickwit.io/docs/reference/query-language#escaping-special-characters
+                query = escaped(re.sub(r"[^-\w]+", "?", query))
                 q = (
                     q.with_(
                         "n",
