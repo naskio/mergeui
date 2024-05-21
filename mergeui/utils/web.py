@@ -35,14 +35,15 @@ def models_as_partials(
     pretty_set = display_columns if pretty else set()
     return list(map(lambda m: {
         **m.dict(include=display_columns),
-        **{k: pretty_format_description(getattr(m, k), m.private, is_valid_repo_id(m.id)) for k in {"description"} if
-           k in pretty_set},
+        **{k: pretty_format_description(getattr(m, k), m.private, is_valid_repo_id(m.id), 256)
+           for k in {"description"} if k in pretty_set},
         **{k: pretty_format_dt(getattr(m, k)) for k in Model.dt_fields() if k in pretty_set},
         **{k: pretty_format_int(getattr(m, k)) for k in Model.int_fields() if k in pretty_set},
         **{k: pretty_format_float(getattr(m, k), suffix="%") for k in Model.float_fields() if k in pretty_set},
     }, models))
 
 
+# noinspection PyProtectedMember
 def graph_as_data_graph(graph: Graph) -> DataGraph:
     """Convert Graph object to data graph"""
     nodes = []
@@ -62,22 +63,25 @@ def graph_as_data_graph(graph: Graph) -> DataGraph:
     return DataGraph(nodes=nodes, relationships=relationships)
 
 
+def markdown_anchor_el(text_: t.Optional[str], href_: t.Optional[str], tooltip_: t.Optional[str]) -> t.Optional[str]:
+    """Markdown anchor element with optional tooltip"""
+    if not text_:
+        return text_
+    if not href_ and not tooltip_:
+        return text_
+    if not tooltip_:
+        return f'[{text_}]({href_})'
+    if not href_:
+        return f'[{text_}](# "{tooltip_}")'
+    return f'[{text_}]({href_} "{tooltip_}")'
+
+
 def models_as_dataframe(
         models: t.List[Model],
         display_columns: t.Optional[t.List[DisplayColumnType]] = None,
         pretty: bool = True,
 ) -> DataFrameDataType:
     """Convert list of Model objects to DataFrame"""
-
-    def markdown_link(text_: str, url_: t.Optional[str], tooltip_: t.Optional[str]) -> str:
-        if not url_ and not tooltip_:
-            return text_
-        if not tooltip_:
-            return f'[{text_}]({url_})'
-        if not url_:
-            return f'[{text_}](# "{tooltip_}")'
-        return f'[{text_}]({url_} "{tooltip_}")'
-
     display_columns = display_columns or Model.display_fields()
     dt_fields = set(Model.dt_fields())
     int_fields = set(Model.int_fields())
@@ -92,11 +96,14 @@ def models_as_dataframe(
             datatype_ = 'str'
             if pretty:
                 if col == 'id':
-                    value = markdown_link(model.id, model.url, model.description)
+                    value = markdown_anchor_el(model.id, model.url, model.description)
                     datatype_ = 'markdown'
                 elif col == 'description':
                     datatype_ = 'markdown'
-                    value = pretty_format_description(value, model.private, is_valid_repo_id(model.id))
+                    value = pretty_format_description(value, model.private, is_valid_repo_id(model.id), 128)
+                elif col == 'author':
+                    datatype_ = 'markdown'
+                    value = markdown_anchor_el(value, f"https://huggingface.co/{value}", f'Visit {value} profile on HF')
                 elif col in dt_fields:
                     value = pretty_format_dt(value)
                 elif col in int_fields:
