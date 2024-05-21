@@ -1,5 +1,5 @@
 import typing as t
-from typing_extensions import TypedDict
+import typing_extensions as te
 
 
 def create_partial_type_from_class(name: str, class_: t.Type, total: bool = True) -> t.Type:
@@ -8,11 +8,13 @@ def create_partial_type_from_class(name: str, class_: t.Type, total: bool = True
     fields = {}
     for c in all_classes:
         fields.update(c.__annotations__)
-    return TypedDict(name, fields.items(), total=total)
+    # noinspection PyTypeChecker
+    return te.TypedDict(name, fields.items(), total=total)
 
 
 def create_literal_type(options: t.Iterable) -> t.Type:
     """Create a Literal type for field names from a class"""
+    # noinspection PyTypeHints
     return t.Literal[tuple(options)]
 
 
