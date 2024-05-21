@@ -4,6 +4,14 @@ import gqlalchemy as gq
 from core.schema import Model
 
 
+class DummyLabel(gq.Node):
+    pass
+
+
+class DummyType(gq.Relationship, type="DUMMY_TYPE"):
+    pass
+
+
 def test_list_property_values(graph_repository):
     choices = graph_repository.list_property_values(key="license")
     assert isinstance(choices, list)
@@ -107,22 +115,26 @@ def test_count_nodes(graph_repository):
 @pytest.mark.run(order=-5)
 def test_create_relationship(graph_repository):
     graph_repository.create_or_update(
+        label='DummyLabel',
         filters=dict(id='a'),
         create_values={'name': "A"},
         update_values={},
     )
     graph_repository.create_or_update(
+        label='DummyLabel',
         filters=dict(id='b'),
         create_values={'name': "B"},
         update_values={},
     )
     graph_repository.create_relationship(
+        label='DummyLabel',
         from_id='a',
         to_id='b',
         relationship_type='DUMMY_TYPE',
         properties={'x': 1, 'y': 2},
     )
     sub_graph = graph_repository.get_sub_graph(
+        label='DummyLabel',
         start_id='a',
     )
     assert len(sub_graph.nodes) == 2
@@ -173,6 +185,7 @@ def test_create_or_update(graph_repository):
     # new
     filters = dict(id="Q-bert/MetaMath-Cybertron-Starling-2")
     graph_repository.create_or_update(
+        label='DummyLabel',
         filters=filters,
         create_values=create_values,
         update_values=update_values,
