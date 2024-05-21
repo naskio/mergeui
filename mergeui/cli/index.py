@@ -8,7 +8,7 @@ import rq
 import huggingface_hub as hf
 from huggingface_hub import hf_api
 import gqlalchemy as gq
-from core.dependencies import get_settings, get_graph_repository
+from core.dependencies import get_settings, get_db_connection, get_graph_repository
 from utils import filter_none, custom_serializer, log_progress, format_duration, set_env_var
 from utils.index.data_extraction import list_model_infos, hf_whoami
 from utils.index.jobs import index_model_by_id, create_redis_connection
@@ -161,13 +161,14 @@ def main(
     """Entry point for the index CLI command."""
     start_time = time.time()
     settings = get_settings()
+    db_conn = get_db_connection()
     repository = get_graph_repository()
     # setup
     if reset_db:
-        repository.db_conn.reset()
-        repository.db_conn.setup_pre_populate()
+        db_conn.reset()
+        db_conn.setup_pre_populate()
     logger.debug(f"Creating extra indexes...")
-    repository.db_conn.db.create_index(gq.MemgraphIndex("Model", property="indexed"))
+    db_conn.db.create_index(gq.MemgraphIndex("Model", property="indexed"))
     logger.debug(f"Extra indexes created")
     # indexing models
     index_graph: dict = index_models(limit, local_files_only=local_files_only)
@@ -206,10 +207,10 @@ def main(
     repository.remove_properties(label="Model", keys={"indexed", "new_id"})
     logger.debug(f"Extra properties removed")
     logger.debug(f"Dropping extra indexes...")
-    repository.db_conn.db.drop_index(gq.MemgraphIndex("Model", property="indexed"))
+    db_conn.db.drop_index(gq.MemgraphIndex("Model", property="indexed"))
     logger.debug(f"Extra indexes dropped")
     if reset_db:
-        repository.db_conn.setup_post_populate()
+        db_conn.setup_post_populate()
     # logging
     end_time = time.time()
     logger.success(f"completed in {format_duration(start_time, end_time)}")
