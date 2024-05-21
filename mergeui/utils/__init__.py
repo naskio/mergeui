@@ -1,4 +1,6 @@
 import typing as t
+import os
+import textwrap
 from loguru import logger
 import datetime as dt
 import re
@@ -22,11 +24,11 @@ def aware_to_naive_dt(t_: dt.datetime) -> dt.datetime:
     return t_.replace(tzinfo=None)
 
 
-def pretty_format_dt(t_: t.Optional[dt.datetime]) -> t.Optional[str]:
+def pretty_format_dt(t_: t.Optional[dt.datetime], with_seconds: bool = False) -> t.Optional[str]:
     """Format datetime to human-readable string."""
     if t_ is not None:
         t_ = naive_to_aware_dt(t_)
-        return t_.strftime("%Y-%m-%d %H:%M:%S")
+        return t_.strftime(f"%Y-%m-%d %H:%M{':%S' if with_seconds else ''}")
 
 
 def parse_iso_dt(t_str: t.Optional[str]) -> t.Optional[dt.datetime]:
