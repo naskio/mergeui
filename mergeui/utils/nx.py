@@ -58,6 +58,7 @@ def load_nx_graph_from_json_file(json_path: Path) -> nx.Graph:
     return graph
 
 
+# noinspection PyProtectedMember
 def get_nx_translator(db: DatabaseClient) -> NxTranslator:
     return NxTranslator(
         host=db.host,
