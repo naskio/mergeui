@@ -48,12 +48,12 @@ def test_list_models__exclude(model_service):
     assert len(result) == 5
     result = model_service.list_models(
         license_='apache-2.0',
-        exclude='base models'
+        excludes=['base models']
     )
     assert len(result) == 1
     result = model_service.list_models(
         license_='apache-2.0',
-        exclude='merged models'
+        excludes=['merged models']
     )
     assert len(result) == 4
 
