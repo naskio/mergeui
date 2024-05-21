@@ -10,7 +10,7 @@ import whoosh.index as whi
 from core.db import DatabaseConnection, execute_query
 from core.base import BaseRepository
 from core.schema import Model
-from utils import escaped
+from utils import escaped, filter_none
 
 
 def _get_where_clause(q, where_initiated: bool):
@@ -20,9 +20,10 @@ def _get_where_clause(q, where_initiated: bool):
 class ModelRepository(BaseRepository):
     def __init__(self, db_conn: 'DatabaseConnection'):
         self.db_conn = db_conn
-        if self.db_conn.settings.memgraph_text_search_disabled:
-            self.index_dir = db_conn.settings.project_dir / "media" / db_conn.settings.text_index_name
-            self.schema = self._get_schema()
+        self.settings = db_conn.settings
+        self.index_dir = db_conn.settings.project_dir / "media" / db_conn.settings.text_index_name
+        self.schema = self._get_schema()
+        if self.settings.memgraph_text_search_disabled:
             self.query_parser = self._get_query_parser()
             self.index = None
             self.searcher = None
@@ -31,9 +32,8 @@ class ModelRepository(BaseRepository):
                 self.searcher = self.index.searcher()
 
     def __del__(self):
-        if self.db_conn.settings.memgraph_text_search_disabled:
-            if self.searcher is not None:
-                self.searcher.close()
+        if getattr(self, "searcher", None) is not None:
+            self.searcher.close()
 
     def list_models(
             self,
@@ -43,20 +43,17 @@ class ModelRepository(BaseRepository):
             not_label: t.Optional[str] = None,
             sort_key: t.Optional[str] = None,
             sort_order: t.Optional[Order] = None,
-            exclude_null_on_sort_key: bool = False,
-            license_: t.Optional[str] = None,
-            merge_method: t.Optional[str] = None,
-            architecture: t.Optional[str] = None,
+            sort_exclude_null_on_key: bool = False,
             base_model: t.Optional[str] = None,
             limit: t.Optional[int] = None,
+            filters: t.Optional[dict[str, t.Any]] = None,
     ) -> list[Model]:
         """Get all models with optional filters"""
-        query = escaped(query)
         base_model = escaped(base_model)
-        q = gq.match(connection=self.db_conn.db)
         where_initiated = False
-        # label
-        q = q.node(label, variable="n")
+        q = gq.match(connection=self.db_conn.db)
+        # label and filters
+        q = q.node(label, variable="n", **filter_none(escaped(filters) or {}))
         # base_model
         if base_model is not None:
             q = (q.to("DERIVED_FROM", variable="r")
@@ -65,30 +62,20 @@ class ModelRepository(BaseRepository):
         if not_label is not None:
             q = q.where_not("n", Operator.LABEL_FILTER, expression=not_label)
             where_initiated = True
-        # license
-        if license_ is not None:
-            q = _get_where_clause(q, where_initiated)("n.license", Operator.EQUAL, literal=license_)
-            where_initiated = True
-        # merge_method
-        if merge_method is not None:
-            q = _get_where_clause(q, where_initiated)("n.merge_method", Operator.EQUAL, literal=merge_method)
-            where_initiated = True
-        # architecture
-        if architecture is not None:
-            q = _get_where_clause(q, where_initiated)("n.architecture", Operator.EQUAL, literal=architecture)
-            where_initiated = True
         # exclude null on sort_key
-        if exclude_null_on_sort_key and sort_key is not None:
+        if sort_exclude_null_on_key and sort_key is not None:
             q = q.add_custom_cypher(f"{'AND' if where_initiated else 'WHERE'} n.{sort_key} IS NOT NULL")
+            # noinspection PyUnusedLocal
             where_initiated = True
         # search query
         hits: t.Optional[set[str]] = None
         if query is not None and query.strip() != "":
-            if not self.db_conn.settings.memgraph_text_search_disabled:
+            if not self.settings.memgraph_text_search_disabled:
+                query = escaped(query)
                 q = (
                     q.with_(
                         "n",
-                    ).call("text_search.search_all", f"'{self.db_conn.settings.text_index_name}', '{query}'")
+                    ).call("text_search.search_all", f"'{self.settings.text_index_name}', '{query}'")
                     .yield_("node")
                     .with_("n, node")
                     .where("n", Operator.EQUAL, expression="node")
@@ -96,26 +83,25 @@ class ModelRepository(BaseRepository):
             else:
                 hits = self._search_models(query, limit=limit)
         q = q.return_(f"DISTINCT n")
+        # sort by
         if sort_key is not None:
             q = q.order_by(properties=[(f"n.{sort_key}", sort_order or Order.ASC)])
+        # limit
         if limit is not None:
             q = q.limit(limit)
         result = map(lambda x: x.get("n"), execute_query(q) or [])
+        # filter whoosh hits
         if hits is not None:
-            if self.db_conn.settings.whoosh_case_sensitive:
-                result = filter(lambda m: m.id in hits, result)
-            else:
-                result = filter(lambda m: str(m.id).lower() in hits, result)
+            result = filter(lambda m: m.id in hits, result)
+        # return result
         result = list(result)
         return t.cast(list[Model], result)
 
-    def build_text_search_index(self, reset_if_not_empty: bool = True) -> None:
+    def create_text_search_index(self, reset_if_not_empty: bool = True) -> None:
         """Create text-search index for models in the file system"""
-        if not self.db_conn.settings.memgraph_text_search_disabled:
-            raise NotImplementedError("You need to disable Memgraph text search to use Whoosh text-search.")
-        logger.debug("Creating text-search index...")
+        logger.info(f"Creating text-search index '{self.settings.text_index_name}'...")
         if reset_if_not_empty:
-            self._reset_text_search_index()
+            self.drop_text_search_index()
         if self._is_empty_text_search_index():
             self.index_dir.mkdir(parents=True, exist_ok=True)
             self.index = whi.create_in(self.index_dir, self.schema)
@@ -125,39 +111,41 @@ class ModelRepository(BaseRepository):
                 writer.add_document(**self._get_document(model))
             writer.commit()
             self.searcher = self.index.searcher()
-            logger.success("Text-search index created successfully")
+            logger.success(f"Text-search index '{self.settings.text_index_name}' created successfully")
         else:
-            logger.warning("Text-search index is not empty. Skipping creation.")
+            logger.info(f"Text-search index '{self.settings.text_index_name}' is not empty. Skipping creation.")
 
-    def _reset_text_search_index(self, force: bool = False) -> None:
+    def drop_text_search_index(self, force: bool = False) -> None:
         if force or not self._is_empty_text_search_index():
-            logger.info("Resetting text-search index...")
+            logger.info(f"Resetting text-search index '{self.settings.text_index_name}'...")
             shutil.rmtree(self.index_dir)
-            logger.success("Text-search index reset successfully")
+            logger.success(f"Text-search index '{self.settings.text_index_name}' reset successfully")
         else:
-            logger.warning("Text-search index is already empty. Skipping reset.")
+            logger.info(f"Text-search index '{self.settings.text_index_name}' is already empty. Skipping reset.")
 
     def _is_empty_text_search_index(self) -> bool:
         return not self.index_dir.exists() or not (self.index_dir.is_dir() and list(self.index_dir.iterdir()))
 
+    def _parse_query(self, q_str: str) -> whq.query.Query:
+        parsed_q = q_str.lower() if not self.settings.whoosh_case_sensitive else q_str
+        parsed_q = self.query_parser.parse(parsed_q)
+        logger.trace(f"Parsed Query `{q_str}` => `{parsed_q}`")
+        return parsed_q
+
     def _search_models(self, q_str: str, limit: t.Optional[int] = None) -> set[str]:
         """Search models using the text-search index"""
-        if not self.db_conn.settings.memgraph_text_search_disabled:
+        if not self.settings.memgraph_text_search_disabled:
             raise NotImplementedError("You need to disable Memgraph text search to use Whoosh text-search.")
-        q_str = q_str.lower() if not self.db_conn.settings.whoosh_case_sensitive else q_str
-        q = self.query_parser.parse(q_str)
-        logger.trace(f"Parsed Query: {q}")
-        results = set()
-        hits = self.searcher.search(q, limit=limit)
-        for hit in hits:
-            results.add(hit.get("id"))
-        return results
+        parsed_q = self._parse_query(q_str)
+        hits = self.searcher.search(parsed_q, limit=limit)
+        return set(hit.get("original_id") for hit in hits)
 
     def _get_schema(self) -> whf.Schema:
         self.schema = whf.Schema(
-            id=whf.TEXT(stored=True, field_boost=3.0),  # , unique=True
-            name=whf.ID(field_boost=2.0),
-            author=whf.ID(field_boost=2.0),
+            original_id=whf.STORED,
+            id=whf.ID(field_boost=3.0, unique=True),
+            name=whf.TEXT(field_boost=2.0),
+            author=whf.TEXT(field_boost=2.0),
             description=whf.TEXT(field_boost=1.0),
             license=whf.TEXT(field_boost=0.5),
             merge_method=whf.ID(field_boost=0.5),
@@ -175,8 +163,9 @@ class ModelRepository(BaseRepository):
             merge_method=model.merge_method,
             architecture=model.architecture,
         )
-        if not self.db_conn.settings.whoosh_case_sensitive:
+        if not self.settings.whoosh_case_sensitive:
             _doc = {k: str(v).lower() if v else v for k, v in _doc.items()}
+        _doc["original_id"] = model.id
         return _doc
 
     def _get_query_parser(self) -> whq.QueryParser:
