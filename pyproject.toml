@@ -64,7 +64,6 @@ index = { script = "cli.index:main(limit, reset_db, save_json,local_files_only)"
 worker = { script = "cli.worker:main(queues=queues)", args = [{ name = "queues", default = "default" }], help = "Run custom RQ worker" }
 worker_pool = { script = "cli.worker_pool:main(queues=queues,num_workers=n)", args = [{ name = "queues", default = "default" }, { name = "n", default = 1, type = "integer" }], help = "Run custom RQ worker-pool" }
 # dev mode
+dev = { script = "mergeui.main:start_server", help = "start FastAPI dev server" }
 bokeh_dev = { cmd = "bokeh serve mergeui/cli/bokeh_dev.py --dev", help = "Run bokeh dev server" }
-gradio_dev = { cmd = "gradio mergeui/web/gradio_app/main.py", help = "Run the Gradio UI in dev mode" }
-# others
-start = { script = "mergeui.main:start_server", help = "start FastAPI server" }
+gradio_dev = { cmd = "gradio mergeui/web/gradio_app/main.py", help = "Run Gradio UI dev server" }
