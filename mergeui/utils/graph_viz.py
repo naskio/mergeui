@@ -630,6 +630,7 @@ class GraphPlotBuilder:
 
     def _add_plot_legend(self):
         for graph_renderer in self.p.select(name="graph_renderer"):
+            # _TODO: sort legend items
             if self.graph.nodes:
                 self.p.circle(
                     'x',
