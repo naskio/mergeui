@@ -269,8 +269,8 @@ def get_node_styles(
         color_field: t.Optional[str] = None,
 ) -> dict:
     styles = {
-        "background_fill_color": "beige",
-        "border_line_color": "beige",
+        "background_fill_color": "bisque",
+        "border_line_color": "bisque",
         "text_font_size": "12px",
         "text_font_style": "normal",
         "padding": 8,
@@ -279,8 +279,8 @@ def get_node_styles(
     }
     if value is None:
         styles.update({
-            "background_fill_color": "beige",
-            "border_line_color": "beige",
+            "background_fill_color": "bisque",
+            "border_line_color": "bisque",
             "legend_label": "Undefined",
         })
     elif isinstance(value, bool):
