@@ -19,7 +19,8 @@ class GetModelLineageInputDTO(pd.BaseModel):
     directed: bool = pd.Field(True, description="Exclude children")
     max_hops: int = pd.Field(2, description="Max distance", ge=1, le=settings.max_hops)
     label_field: t.Optional[LabelFieldType] = pd.Field("name", description="Field to use as label")
-    color_field: t.Optional[ColorFieldType] = pd.Field("merge_method", description="Field to use for generating colors")
+    color_field: t.Optional[ColorFieldType] = pd.Field("average_score",
+                                                       description="Field to use for generating colors")
 
 
 class ListModelsInputDTO(pd.BaseModel):
