@@ -254,6 +254,9 @@ def get_edge_styles(*, cardinality: int) -> dict:
             "line_alpha": 1.0,
             "legend_label": "Cardinality > 2",
         })
+    styles.update({
+        "legend_sort_key": min(cardinality, 3),
+    })
     return styles
 
 
@@ -276,12 +279,14 @@ def get_node_styles(
         "padding": 8,
         "text_color": "black",
         "legend_label": None,
+        "legend_sort_key": None,
     }
     if value is None:
         styles.update({
             "background_fill_color": "bisque",
             "border_line_color": "bisque",
             "legend_label": "Undefined",
+            "legend_sort_key": -1,
         })
     elif isinstance(value, bool):
         bool_mapper = {
@@ -289,11 +294,13 @@ def get_node_styles(
                 'background_fill_color': 'lightgreen',
                 "border_line_color": "lightgreen",
                 "legend_label": "True",
+                "legend_sort_key": 1,
             },
             False: {
                 'background_fill_color': '#ffa5a5',
                 "border_line_color": "#ffa5a5",
                 "legend_label": "False",
+                "legend_sort_key": 0,
             }
         }
         styles.update(bool_mapper[value])
@@ -400,7 +407,7 @@ def get_node_styles(
                         break
                 legend_label = (f"[{pretty_format_int(classes_max[value_class - 1])} - "
                                 f"{pretty_format_int(classes_max[value_class])}[")
-        styles.update(number_mapper[value_class], legend_label=legend_label)
+        styles.update(number_mapper[value_class], legend_label=legend_label, legend_sort_key=value_class)
     else:
         palette = Set3_12
         color_index = hash_string(str(value)) % len(palette)
@@ -409,6 +416,7 @@ def get_node_styles(
             "border_line_color": palette[color_index],
             "text_color": "black",
             "legend_label": str(value),
+            "legend_sort_key": color_index,
         })
     merged_mapper = {
         True: {
@@ -654,7 +662,6 @@ class GraphPlotBuilder:
 
     def _add_plot_legend(self):
         for graph_renderer in self.p.select(name="graph_renderer"):
-            # _TODO: sort legend items
             if self.graph.nodes:
                 self.p.circle(
                     'x',
@@ -676,10 +683,24 @@ class GraphPlotBuilder:
                     source=graph_renderer.edge_renderer.data_source,
                 )
             if self.p.legend:
+                # sort legend items
+                sorter = {}
+                required_ds_key = "legend_sort_key"
+                data_sources: list[dict] = [graph_renderer.node_renderer.data_source.data,
+                                            graph_renderer.edge_renderer.data_source.data]
+                max_ds_len = max(sum(len(ds.get(required_ds_key, [])) for ds in data_sources), 12)
+                for ds_c, ds in enumerate(data_sources):
+                    for ind in range(len(ds.get(required_ds_key, []))):
+                        legend_label = ds.get("legend_label")[ind]
+                        legend_sort_key = ds.get("legend_sort_key")[ind]
+                        if legend_label not in sorter:
+                            sorter[legend_label] = legend_sort_key + (ds_c * max_ds_len if legend_sort_key != -1 else 0)
+                self.p.legend.items.sort(key=lambda x: sorter.get(x.label.value))
+                # set legend properties
+                self.p.legend.title = Model.field_label(self.color_field) if self.color_field else None
                 # self.p.legend.location = "top_left"
                 # self.p.legend.ncols = 2
                 # self.p.legend.nrows = 2
-                self.p.legend.title = Model.field_label(self.color_field) if self.color_field else None
 
     def is_empty(self) -> bool:
         return not self.graph or not self.graph.nodes
