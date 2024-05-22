@@ -574,8 +574,8 @@ class GraphPlotBuilder:
                 ))
 
     def _set_plot_ranges(self, graph_range_x: Range1d, graph_range_y: Range1d):
-        self.p.x_range = _scale_range(graph_range_x, 1.25)
-        self.p.y_range = _scale_range(graph_range_y, 1.25)
+        self.p.x_range = _scale_range(graph_range_x, 1.5)
+        self.p.y_range = _scale_range(graph_range_y, 1.35)
 
     def _hide_plot_axis(self):
         self.p.xaxis.visible = False
