@@ -270,14 +270,14 @@ def extract_base_models_from_mergekit_configs(mergekit_configs: t.Optional[list[
     return base_model_set
 
 
-def extract_base_models_from_card_data(card_data: dict) -> set[str]:
+def extract_base_models_from_card_data(card_data: dict, list_only: bool = True) -> set[str]:
     # https://huggingface.co/docs/hub/en/model-cards#model-card-metadata
     found = []
     base_model = card_data.get("base_model", None)
-    if isinstance(base_model, str):
-        found.append(base_model)
-    elif isinstance(base_model, list):
+    if isinstance(base_model, list):
         found.extend(base_model)
+    elif isinstance(base_model, str) and not list_only:
+        found.append(base_model)
     return set(f for f in found if isinstance(f, str))
 
 
@@ -288,15 +288,15 @@ def extract_base_models_from_tags(tags: list[str]) -> set[str]:
     return set()
 
 
-def extract_base_models_from_model_card(model_card: t.Optional[hf.ModelCard]) -> set[str]:
+def extract_base_models_from_model_card(model_card: t.Optional[hf.ModelCard], list_only: bool = True) -> set[str]:
     if not model_card or not model_card.data:
         return set()
     card_data: hf.ModelCardData = model_card.data
     if card_data.base_model:
-        if isinstance(card_data.base_model, str):
-            return {card_data.base_model}
-        elif isinstance(card_data.base_model, list):
+        if isinstance(card_data.base_model, list):
             return set(card_data.base_model)
+        elif isinstance(card_data.base_model, str) and not list_only:
+            return {card_data.base_model}
     return set()
 
 
