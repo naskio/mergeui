@@ -155,6 +155,7 @@ def _get_graph_data_sources(
                 value=node_data.get(str(color_field) if color_field else None),
                 is_selected=is_selected,
                 is_merged_model=is_merged_model,
+                color_field=color_field,
             ),
         })
         # pretty format fields after computing styles
@@ -265,6 +266,7 @@ def get_node_styles(
         value: t.Union[None, str, bool, float, int],
         is_selected: bool,
         is_merged_model: bool,
+        color_field: t.Optional[str] = None,
 ) -> dict:
     styles = {
         "background_fill_color": "beige",
@@ -301,82 +303,104 @@ def get_node_styles(
                 'background_fill_color': "#801500",
                 "border_line_color": "#801500",
                 "text_color": "white",
-                "legend_label": "0%",
             },
             1: {
                 'background_fill_color': RdYlGn11[10],
                 "border_line_color": RdYlGn11[10],
                 "text_color": "white",
-                "legend_label": "]0 - 10%[",
             },
             2: {
                 'background_fill_color': RdYlGn11[9],
                 "border_line_color": RdYlGn11[9],
                 "text_color": "black",
-                "legend_label": "[10% - 20%[",
             },
             3: {
                 'background_fill_color': RdYlGn11[8],
                 "border_line_color": RdYlGn11[8],
                 "text_color": "black",
-                "legend_label": "[20% - 30%[",
             },
             4: {
                 'background_fill_color': RdYlGn11[7],
                 "border_line_color": RdYlGn11[7],
                 "text_color": "black",
-                "legend_label": "[30% - 40%[",
             },
             5: {
                 'background_fill_color': RdYlGn11[6],
                 "border_line_color": RdYlGn11[6],
                 "text_color": "black",
-                "legend_label": "[40% - 50%[",
             },
             6: {
                 'background_fill_color': RdYlGn11[5],
                 "border_line_color": RdYlGn11[5],
                 "text_color": "black",
-                "legend_label": "[50% - 60%[",
             },
             7: {
                 'background_fill_color': RdYlGn11[4],
                 "border_line_color": RdYlGn11[4],
                 "text_color": "black",
-                "legend_label": "[60% - 70%[",
             },
             8: {
                 'background_fill_color': RdYlGn11[3],
                 "border_line_color": RdYlGn11[3],
                 "text_color": "black",
-                "legend_label": "[70% - 80%[",
             },
             9: {
                 'background_fill_color': RdYlGn11[2],
                 "border_line_color": RdYlGn11[2],
                 "text_color": "black",
-                "legend_label": "[80% - 90%[",
             },
             10: {
                 'background_fill_color': RdYlGn11[1],
                 "border_line_color": RdYlGn11[1],
                 "text_color": "white",
-                "legend_label": "[90% - 100%[",
             },
             11: {
                 'background_fill_color': RdYlGn11[0],
                 "border_line_color": RdYlGn11[0],
                 "text_color": "white",
-                "legend_label": "100%",
             }
         }
-        if value <= 0.0:
-            value = 0
-        elif value >= 1.0:
-            value = 1
-        else:
-            value = int(value * 10) + 1
-        styles.update(number_mapper[value])
+        if isinstance(value, float):  # scores in [0.0 - 1.0]
+            if value <= 0.0:
+                value_class = 0
+            elif value >= 1.0:
+                value_class = len(number_mapper) - 1
+            else:
+                value_class = int(value * 10) + 1
+            legend_label_mapper = [
+                "0%",
+                "]0 - 10%[",
+                "[10% - 20%[",
+                "[20% - 30%[",
+                "[30% - 40%[",
+                "[40% - 50%[",
+                "[50% - 60%[",
+                "[60% - 70%[",
+                "[70% - 80%[",
+                "[80% - 90%[",
+                "[90% - 100%[",
+                "100%",
+            ]
+            legend_label = legend_label_mapper[value_class]
+        else:  # int: likes, downloads
+            value_class, legend_label = None, None
+            classes_max = [0, 3, 5, 10, 20, 50, 100, 250, 500, 1000, 10000]
+            if color_field == "downloads":
+                classes_max = [0, 10, 50, 100, 500, 1000, 5000, 10000, 100000, 1000000, 10000000]
+            if value <= 0:
+                value_class = 0
+                legend_label = "0"
+            elif value >= classes_max[-1]:
+                value_class = len(number_mapper) - 1
+                legend_label = f"+{pretty_format_int(classes_max[-1])}"
+            if value_class is None:
+                for v_c, c_max in enumerate(classes_max):
+                    if value < c_max:
+                        value_class = v_c
+                        break
+                legend_label = (f"[{pretty_format_int(classes_max[value_class - 1])} - "
+                                f"{pretty_format_int(classes_max[value_class])}[")
+        styles.update(number_mapper[value_class], legend_label=legend_label)
     else:
         palette = Set3_12
         color_index = hash_string(str(value)) % len(palette)
