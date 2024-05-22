@@ -138,7 +138,7 @@ class DatabaseConnection(BaseDatabaseConnection):
             assert self.is_empty(), "Database is not empty after reset."
             logger.success("Database reset completed.")
         else:
-            logger.warning("Database is already empty. Skipping reset.")
+            logger.info("Database is already empty. Skipping reset.")
 
     def is_empty(self) -> bool:
         """Check if database is empty."""
