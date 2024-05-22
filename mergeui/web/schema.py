@@ -39,12 +39,10 @@ DataT = t.TypeVar('DataT')
 
 
 class GenericRO(pd.BaseModel, t.Generic[DataT]):
+    model_config = pd.ConfigDict(arbitrary_types_allowed=True)
     success: bool = True
     message: t.Optional[str] = None
     data: t.Optional[DataT] = None
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 PartialModel = create_partial_type_from_class("PartialModel", Model, total=False)
