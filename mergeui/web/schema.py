@@ -7,7 +7,7 @@ from utils.types import create_partial_type_from_class
 settings = get_settings()
 
 LabelFieldType = t.Literal[
-    "id", "name", "author", "license", "merge_method", "architecture", "likes", "downloads", "average_score",
+    "", "id", "name", "author", "license", "merge_method", "architecture", "likes", "downloads", "average_score",
     "arc_score", "hella_swag_score", "mmlu_score", "truthfulqa_score", "winogrande_score", "gsm8k_score"]
 ColorFieldType = t.Literal[
     "author", "license", "merge_method", "architecture", "likes", "downloads", "average_score",
