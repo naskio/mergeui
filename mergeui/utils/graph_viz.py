@@ -1,5 +1,4 @@
 import math
-import textwrap
 import typing as t
 import networkx as nx
 from networkx.drawing.nx_pydot import graphviz_layout
@@ -51,6 +50,7 @@ def get_position_between(a: tuple[float, float], b: tuple[float, float], scaler:
 # ##### Graph Manipulation #####
 
 
+# noinspection PyProtectedMember
 def _get_nxg_skeleton(graph: Graph) -> nx.Graph:
     nxg = nx.DiGraph()
     for node in graph.nodes:
@@ -60,6 +60,7 @@ def _get_nxg_skeleton(graph: Graph) -> nx.Graph:
     return nxg
 
 
+# noinspection PyProtectedMember
 def _get_relationship_groups(relationships: list[DerivedFrom]) -> dict[tuple[int, int], list[DerivedFrom]]:
     grouped_edges: dict[tuple[int, int], list[DerivedFrom]] = {}
     for rel in relationships:
@@ -99,6 +100,7 @@ def _scale_range(r: Range1d, c: float) -> Range1d:
     return Range1d(r.start - padding, r.end + padding)
 
 
+# noinspection PyProtectedMember
 def _get_graph_data_sources(
         *,
         graph: Graph,
@@ -149,7 +151,6 @@ def _get_graph_data_sources(
         })
         # pretty format fields after computing styles
         node_data.update({
-            "description": pretty_format_description(node.description, node.private, is_valid_repo_id(node.id)),
             **{k: pretty_format_dt(getattr(node, k)) for k in Model.dt_fields()},
             **{k: pretty_format_int(getattr(node, k)) for k in Model.int_fields()},
             **{k: pretty_format_float(getattr(node, k), "%") for k in Model.float_fields()},
@@ -222,6 +223,7 @@ def get_edge_extraction_origin(grouped_edges: list[DerivedFrom]) -> str:
     return grouped_edges[0].origin
 
 
+# noinspection PyProtectedMember
 def get_edge_type(grouped_edges: list[DerivedFrom]) -> str:
     return grouped_edges[0]._type
 
@@ -247,8 +249,7 @@ def get_edge_styles(*, cardinality: int) -> dict:
 
 
 def get_node_summary(node: Model, max_length: int = 96) -> str:
-    return (textwrap.shorten(node.description, width=max_length, placeholder="...")
-            if node.description else "")
+    return pretty_format_description(node.description, node.private, is_valid_repo_id(node.id), max_length)
 
 
 def get_node_styles(
