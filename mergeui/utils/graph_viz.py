@@ -44,6 +44,14 @@ def get_position_between(a: tuple[float, float], b: tuple[float, float], scaler:
     return a[0] + scaled_dx, a[1] + scaled_dy
 
 
+def hash_string(string: t.Optional[str]) -> int:
+    hash_value = 0
+    if string:
+        for char in string:
+            hash_value = (hash_value * 31 + ord(char)) % 1000000007
+    return hash_value
+
+
 # ##### Helpers #####
 
 
@@ -371,7 +379,7 @@ def get_node_styles(
         styles.update(number_mapper[value])
     else:
         palette = Set3_12
-        color_index = hash(str(value)) % len(palette)
+        color_index = hash_string(str(value)) % len(palette)
         styles.update({
             'background_fill_color': palette[color_index],
             "border_line_color": palette[color_index],
