@@ -81,11 +81,14 @@ def test_get_sub_graph(graph_repository):
 
 def test_get_sub_tree(graph_repository):
     # top node
-    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron-Starling')
+    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron-Starling', directed=True)
     assert len(gr.nodes) == 5
     assert isinstance(gr.nodes[0], gq.Node)
     assert len(gr.relationships) == 7
     assert isinstance(gr.relationships[0], gq.Relationship)
+    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron-Starling', directed=False)
+    assert len(gr.nodes) == 5
+    assert len(gr.relationships) == 7
     # isolated node
     gr = graph_repository.get_sub_tree(start_id='mistralai/Mistral-7B-v0.1')
     assert len(gr.nodes) == 1
@@ -95,13 +98,16 @@ def test_get_sub_tree(graph_repository):
     assert len(gr.nodes) == 0
     assert len(gr.relationships) == 0
     # middle node
-    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron')
-    assert len(gr.nodes) == 5
-    assert len(gr.relationships) == 7
+    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron', directed=False)
+    assert len(gr.nodes) == 4
+    assert len(gr.relationships) == 5
+    gr = graph_repository.get_sub_tree(start_id='Q-bert/MetaMath-Cybertron', directed=True)
+    assert len(gr.nodes) == 3
+    assert len(gr.relationships) == 3
     # bottom node
-    gr = graph_repository.get_sub_tree(start_id='berkeley-nest/Starling-LM-7B-alpha')
-    assert len(gr.nodes) == 5
-    assert len(gr.relationships) == 7
+    gr = graph_repository.get_sub_tree(start_id='berkeley-nest/Starling-LM-7B-alpha', directed=False)
+    assert len(gr.nodes) == 2
+    assert len(gr.relationships) == 2
     # empty id
     gr = graph_repository.get_sub_tree(start_id='')
     assert len(gr.nodes) == 0

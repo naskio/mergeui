@@ -29,9 +29,15 @@ def test_get_architecture_choices(model_service):
 
 
 def test_get_model_lineage(model_service):
-    result = model_service.get_model_lineage(model_id='fblgit/una-cybertron-7b-v2-bf16')
-    assert len(result.nodes) == 5
-    assert len(result.relationships) == 7
+    result = model_service.get_model_lineage(model_id='fblgit/una-cybertron-7b-v2-bf16', directed=False)
+    assert len(result.nodes) == 3
+    assert len(result.relationships) == 4
+    result = model_service.get_model_lineage(model_id='fblgit/una-cybertron-7b-v2-bf16', directed=True)
+    assert len(result.nodes) == 1
+    assert len(result.relationships) == 0
+    result = model_service.get_model_lineage(model_id='Q-bert/MetaMath-Cybertron', directed=True)
+    assert len(result.nodes) == 3
+    assert len(result.relationships) == 3
 
 
 def test_list_models(model_service):

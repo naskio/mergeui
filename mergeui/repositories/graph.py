@@ -340,26 +340,37 @@ class GraphRepository(BaseRepository):
         rel_var = f"{rel_var}*"
         if max_hops is not None:
             rel_var = f"{rel_var}..{max_hops}"
-        q = (
-            gq.match(connection=self.db_conn.db)
+        q = (  # outgoing relationships
+            gq.match(optional=True, connection=self.db_conn.db)
             .add_custom_cypher("path = ")
             .node(label, id=start_id)
-            .to(variable=rel_var, directed=directed)
+            .to(variable=rel_var, directed=True)
             .node(label)
-            .with_("nodes(path) as all_nodes, relationships(path) as all_rels")
-            .unwind("all_nodes", variable="node")
+            .with_("coalesce(nodes(path),[]) as all_nodes, coalesce(relationships(path),[]) as all_rels")
+        )
+        if not directed:  # incoming relationships
+            q = (
+                q.match(optional=True)
+                .add_custom_cypher("path_inv = ")
+                .node(label)
+                .to(variable=rel_var, directed=True)
+                .node(label, id=start_id)
+                .with_(
+                    "(all_nodes + coalesce(nodes(path_inv),[])) as all_nodes, "
+                    "(all_rels + coalesce(relationships(path_inv),[])) as all_rels")
+            )
+        q = (
+            q.unwind("all_nodes", variable="node")
             .unwind("all_rels", variable="rel")
             .with_("COLLECT(DISTINCT node) as distinct_nodes, COLLECT(DISTINCT rel) as distinct_rels")
             .return_("distinct_nodes as nodes, distinct_rels as relationships")
         )
-        results = execute_query(q)
-        gr = _results_as_graph(results)
+        gr = _results_as_graph(execute_query(q))
         if not gr.nodes:  # handle isolated node or empty graph
             q = (
                 gq.match(connection=self.db_conn.db)
                 .node(label, variable="n", id=start_id)
                 .return_("COLLECT(DISTINCT n) AS nodes, [] AS relationships")
             )
-            results = execute_query(q)
-            gr = _results_as_graph(results)
+            gr = _results_as_graph(execute_query(q))
         return gr
