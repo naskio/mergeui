@@ -1,3 +1,2 @@
-# note: use poetry for development, this file is only used for HF Space
 graphviz
 graphviz-dev
