@@ -281,13 +281,6 @@ def extract_base_models_from_card_data(card_data: dict, list_only: bool = True) 
     return set(f for f in found if isinstance(f, str))
 
 
-def extract_base_models_from_tags(tags: list[str]) -> set[str]:
-    base_models = set([tag.replace('base_model:', '') for tag in tags if tag.startswith('base_model:')])
-    if any(m_tag in tags for m_tag in ["merge", ]):
-        return base_models
-    return set()
-
-
 def extract_base_models_from_model_card(model_card: t.Optional[hf.ModelCard], list_only: bool = True) -> set[str]:
     if not model_card or not model_card.data:
         return set()
@@ -300,6 +293,13 @@ def extract_base_models_from_model_card(model_card: t.Optional[hf.ModelCard], li
     return set()
 
 
+def extract_base_models_from_tags(tags: list[str]) -> set[str]:
+    base_models = set([tag.replace('base_model:', '') for tag in tags if tag.startswith('base_model:')])
+    if any(m_tag in tags for m_tag in ["merge", ]):
+        return base_models
+    return set()
+
+
 def extract_merge_method_from_mergekit_config(mergekit_config: dict) -> t.Optional[str]:
     return mergekit_config.get("merge_method")
 
@@ -307,7 +307,7 @@ def extract_merge_method_from_mergekit_config(mergekit_config: dict) -> t.Option
 def extract_merge_method_from_model_description(model_description: t.Optional[str]) -> t.Optional[str]:
     if not model_description:
         return None
-    available_methods = list(t.get_args(MergeMethodType))
+    available_methods = set(t.get_args(MergeMethodType)) - {'other'}
     for method in available_methods:
         if method in model_description:
             return method
