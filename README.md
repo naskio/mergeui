@@ -1,7 +1,6 @@
 [![MergeUI](./static/brand/banner.svg)](https://naskio-mergeui.hf.space)
-<h3 style="text-align: center;">All-in-one UI for merged LLMs in Hugging Face Hub</h3>
+<h3 align="center">All-in-one UI for merged LLMs in Hugging Face Hub</h3>
 
----
 [MergeUI](https://naskio-mergeui.hf.space) is an [open-source project](https://github.com/naskio/mergeui) that aims to
 provide a user-friendly interface for discovering and analyzing merged large language models (Merged LLMs) from
 the [Hugging Face Hub](https://huggingface.co/models?other=merge&sort=trending).
@@ -76,8 +75,8 @@ For indexing models we use [RQ](https://python-rq.org/):
   ```
 
 > [!IMPORTANT]
-> The indexing process takes few minutes to complete depending on your resources and the number of workers and `merge`
-> models available.
+> The indexing process takes few minutes to complete depending on your resources, number of workers and number
+> of `merge` models available.
 
 > [!NOTE]
 > It takes around 6 minutes to index a graph of ~12k models and ~51k relationships using 64 workers.
