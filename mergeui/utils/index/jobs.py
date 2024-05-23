@@ -10,8 +10,8 @@ from utils import aware_to_naive_dt, filter_none, format_duration
 from utils.index.data_extraction import get_model_info, load_model_card, download_mergekit_config, get_data_origin, \
     extract_benchmark_results_from_dataset, extract_model_url_from_model_info, extract_model_name_from_model_card, \
     extract_model_description_from_model_card, extract_license_from_tags, extract_license_from_model_card, \
-    extract_model_architecture_from_model_info, extract_merge_method_from_model_description, \
-    extract_merge_method_from_mergekit_config, extract_base_models_from_tags, extract_base_models_from_model_card, \
+    extract_model_architecture_from_model_info, extract_merge_method_from_mergekit_config, \
+    extract_base_models_from_tags, extract_base_models_from_model_card, \
     extract_base_models_from_mergekit_configs, extract_mergekit_configs_from_model_card, \
     extract_mergekit_configs_from_file, extract_model_name_from_model_id, extract_author_from_model_id
 from core.settings import Settings
@@ -76,7 +76,7 @@ def index_model_by_id(model_id: str, results_dataset_folder: str) -> tuple[dict,
         "license": extract_license_from_tags(model_info.tags) or extract_license_from_model_card(
             model_card) or "unknown",
         "author": model_info.author or extract_author_from_model_id(model_info.id),
-        "merge_method": extract_merge_method_from_model_description(description),
+        "merge_method": None,
         "architecture": extract_model_architecture_from_model_info(model_info),
         "likes": model_info.likes,
         "downloads": model_info.downloads,
