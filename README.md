@@ -1,3 +1,7 @@
+---
+license: apache-2.0
+---
+
 [![MergeUI](./static/brand/banner.svg)](https://naskio-mergeui.hf.space)
 <h3 align="center">All-in-one UI for merged LLMs in Hugging Face Hub</h3>
 
