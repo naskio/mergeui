@@ -6,13 +6,6 @@ provide a user-friendly interface for discovering and analyzing merged large lan
 the [Hugging Face Hub](https://huggingface.co/models?other=merge&sort=trending).
 It is particularly focused on models that have been merged using [MergeKit](https://github.com/arcee-ai/mergekit).
 
-## Contributing
-
-MergeUI is a new project, and any contribution would make a difference! Whether you find a bug, have valuable feedback
-or suggestions, or simply want to get involved, we would love to hear from you!
-
----
-
 # Development
 
 ## Requirements
@@ -120,3 +113,8 @@ This project use pytest for testing, you can run the tests using the following c
 ```shell
 poe test
 ```
+
+## Contributing
+
+MergeUI is a new project, and any contribution would make a difference! Whether you find a bug, have valuable feedback
+or suggestions, or simply want to get involved, we would love to hear from you!
