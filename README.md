@@ -2,7 +2,7 @@
 title: MergeUI
 emoji: 🧬
 colorFrom: purple
-colorTo: rose
+colorTo: pink
 sdk: gradio
 sdk_version: 4.31.5
 python_version: 3.9
