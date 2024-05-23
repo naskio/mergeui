@@ -14,9 +14,7 @@ class Settings(pds.BaseSettings):
     project_dir: Path = PROJECT_DIR
     # UI settings
     project_name: str = "MergeUI"
-    description: str = "UI for merged large language models"
-    author: t.Optional[str] = None
-    email: t.Optional[pd.EmailStr] = None
+    description: str = "All-in-one UI for merged LLMs in Hugging Face Hub"
     repo_url: t.Optional[pd.AnyHttpUrl] = "https://github.com/naskio/mergeui"
     favicon_path: Path = PROJECT_DIR / 'static/brand/favicon.ico'
     # gradio

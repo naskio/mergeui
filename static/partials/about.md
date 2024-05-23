@@ -16,7 +16,7 @@ valuable insights into their lineage, benchmark results, and other key details.
 MergeUI makes it easy to:
 
 - **Understand performance**: Explore the performance of each model in the family tree to understand its impact on the
-  final model score.
+  final model score and find out the best way to combine them and maximize performance.
 - **Explore merge strategies**: Analyze the different methods used to merge each model in the family tree to identify
   its impact on the final model.
 - **Check license permissiveness**: Ensure compatibility with your projects by checking the license of each model in the
