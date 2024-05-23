@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check large files
-        uses: ActionsDesk/lfs-warning@v2.0
+        uses: ppremk/lfs-warning@v3.2
         with:
-          filesizelimit: 10485760 # this is 10MB so we can sync to HF Spaces
+          token: ${{ secrets.GITHUB_TOKEN }} # Optional
+          filesizelimit: 10MB # this is 10MB so we can sync to HF Spaces
