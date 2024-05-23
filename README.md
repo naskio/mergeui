@@ -8,7 +8,9 @@ sdk_version: 4.31.5
 python_version: 3.9
 app_file: mergeui/web/gradio_app/main.py
 fullWidth: true
-startup_duration_timeout: 1h
+header: mini
+disable_embedding: true
+startup_duration_timeout: 15m
 license: apache-2.0
 language:
   - en
