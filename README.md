@@ -77,7 +77,10 @@ For indexing models we use [RQ](https://python-rq.org/):
 
 > [!IMPORTANT]
 > The indexing process takes few minutes to complete depending on your resources and the number of workers and `merge`
-> models available. It takes around 6 minutes to index ~12k models using 64 workers.
+> models available.
+
+> [!NOTE]
+> It takes around 6 minutes to index a graph of ~12k models and ~51k relationships using 64 workers.
 
 ### Visualisation
 
@@ -109,4 +112,12 @@ python mergeui/web/gradio_app/main.py # without reloading
 
 ```shell
 poe bokeh_dev
+```
+
+## Testing
+
+This project use pytest for testing, you can run the tests using the following command:
+
+```shell
+poe test
 ```
