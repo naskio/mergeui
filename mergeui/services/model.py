@@ -1,8 +1,8 @@
 import typing as t
 from gqlalchemy.query_builders.memgraph_query_builder import Order
-from core.base import BaseService
-from core.schema import ExcludeOptionType, SortByOptionType, Graph, Model
-from repositories import GraphRepository, ModelRepository
+from mergeui.core.base import BaseService
+from mergeui.core.schema import ExcludeOptionType, SortByOptionType, Graph, Model
+from mergeui.repositories import GraphRepository, ModelRepository
 
 
 class ModelService(BaseService):

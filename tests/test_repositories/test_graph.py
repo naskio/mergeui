@@ -1,7 +1,7 @@
 import pytest
 import typing as t
 import gqlalchemy as gq
-from core.schema import Model
+from mergeui.core.schema import Model
 
 
 class DummyLabel(gq.Node):

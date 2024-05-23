@@ -1,7 +1,7 @@
 import pytest
 import fastapi as fa
 from fastapi.testclient import TestClient
-from web.api import router as api_router
+from mergeui.web.api import router as api_router
 
 
 @pytest.fixture(scope="module")

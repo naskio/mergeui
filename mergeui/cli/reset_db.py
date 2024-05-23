@@ -1,4 +1,4 @@
-from core.dependencies import get_db_connection
+from mergeui.core.dependencies import get_db_connection
 
 
 def main():

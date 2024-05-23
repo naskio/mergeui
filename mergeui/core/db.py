@@ -8,15 +8,15 @@ import gqlalchemy as gq
 from gqlalchemy.vendors.database_client import DatabaseClient
 import networkx as nx
 import time
-import core.settings
-from core.schema import Model
-from core.base import BaseDatabaseConnection
-from utils import parse_iso_dt, aware_to_naive_dt
-from utils.types import get_fields_from_class
-from utils.nx import load_nx_graph_from_json_file, import_nx_graph_to_db
+from mergeui.core.settings import Settings
+from mergeui.core.schema import Model
+from mergeui.core.base import BaseDatabaseConnection
+from mergeui.utils import parse_iso_dt, aware_to_naive_dt
+from mergeui.utils.types import get_fields_from_class
+from mergeui.utils.nx import load_nx_graph_from_json_file, import_nx_graph_to_db
 
 
-def create_db_connection(settings: 'core.settings.Settings') -> DatabaseClient:
+def create_db_connection(settings: Settings) -> DatabaseClient:
     logger.info(f"Creating database connection to {settings.database_url.host}:{settings.database_url.port} ...")
     args = dict(
         host=settings.database_url.host,
@@ -77,10 +77,10 @@ def execute_query(q):
 
 class DatabaseConnection(BaseDatabaseConnection):
     # for import_from_cypher_file, export_to_cypher_file: use UI
-    settings: 'core.settings.Settings'
+    settings: Settings
     db: DatabaseClient
 
-    def __init__(self, settings: 'core.settings.Settings'):
+    def __init__(self, settings: Settings):
         self.settings = settings
         self.db = create_db_connection(self.settings)
 

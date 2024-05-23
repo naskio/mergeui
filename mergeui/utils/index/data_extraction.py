@@ -9,8 +9,8 @@ from loguru import logger
 import re
 import huggingface_hub as hf
 from huggingface_hub import hf_api
-from utils import parse_yaml, filter_none, parse_iso_dt, aware_to_naive_dt, is_valid_repo_id
-from core.schema import MergeMethodType
+from mergeui.utils import parse_yaml, filter_none, parse_iso_dt, aware_to_naive_dt, is_valid_repo_id
+from mergeui.core.schema import MergeMethodType
 
 
 # ##### Hub #####

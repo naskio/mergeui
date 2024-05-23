@@ -1,10 +1,8 @@
 import pytest
 from pathlib import Path
-import core
-from core.dependencies import get_settings, get_graph_repository, get_model_repository, get_db_connection, \
+from mergeui import core, repositories, services
+from mergeui.core.dependencies import get_settings, get_graph_repository, get_model_repository, get_db_connection, \
     get_model_service
-import repositories
-import services
 
 
 @pytest.fixture(scope="session", autouse=True)

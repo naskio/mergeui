@@ -2,12 +2,12 @@ import typing as t
 from loguru import logger
 import gradio as gr
 from gradio.components import Component as BaseGradioComponent
-from core.dependencies import get_model_service
-from core.schema import BaseValidationError, SortByOptionType, ExcludeOptionType, DisplayColumnType
-from web.schema import GenericRO, GetModelLineageInputDTO, ListModelsInputDTO, LabelFieldType, ColorFieldType, \
+from mergeui.core.dependencies import get_model_service
+from mergeui.core.schema import BaseValidationError, SortByOptionType, ExcludeOptionType, DisplayColumnType
+from mergeui.web.schema import GenericRO, GetModelLineageInputDTO, ListModelsInputDTO, LabelFieldType, ColorFieldType, \
     DataFrameDataType
-from utils.web import pretty_error, models_as_dataframe, fix_gradio_select_value
-from utils.graph_viz import Plot, GraphPlotBuilder
+from mergeui.utils.web import pretty_error, models_as_dataframe, fix_gradio_select_value
+from mergeui.utils.graph_viz import Plot, GraphPlotBuilder
 
 
 def get_model_lineage(

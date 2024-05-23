@@ -1,6 +1,5 @@
 import typing as t
-from utils.types import create_literal_type, get_fields_from_class, \
-    get_literal_type_options
+from mergeui.utils.types import create_literal_type, get_fields_from_class, get_literal_type_options
 
 
 class TestClass:

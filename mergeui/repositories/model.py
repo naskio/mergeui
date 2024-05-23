@@ -8,10 +8,10 @@ from gqlalchemy.query_builders.memgraph_query_builder import Order
 import whoosh.fields as whf
 import whoosh.qparser as whq
 import whoosh.index as whi
-from core.db import DatabaseConnection, execute_query
-from core.base import BaseRepository
-from core.schema import Model
-from utils import escaped, filter_none
+from mergeui.core.db import DatabaseConnection, execute_query
+from mergeui.core.base import BaseRepository
+from mergeui.core.schema import Model
+from mergeui.utils import escaped, filter_none
 
 
 def _get_where_clause(q, where_initiated: bool):

@@ -8,12 +8,13 @@ from bokeh.models import MultiLine, HoverTool, Text, Label, TapTool, OpenURL, Cr
     StaticLayoutProvider
 from bokeh.plotting import figure
 from bokeh.palettes import RdYlGn11, Set3_12
-import core.settings
-from core.dependencies import get_settings
-from utils import pretty_format_dt, pretty_format_int, pretty_format_float, pretty_format_description, is_valid_repo_id
-from utils.images import load_image_as_data_uri, load_image_as_np_array
-from core.schema import Graph, DerivedFrom, Model
-from web.schema import LabelFieldType, ColorFieldType
+from mergeui.core.settings import Settings
+from mergeui.core.dependencies import get_settings
+from mergeui.utils import pretty_format_dt, pretty_format_int, pretty_format_float, pretty_format_description, \
+    is_valid_repo_id
+from mergeui.utils.images import load_image_as_data_uri, load_image_as_np_array
+from mergeui.core.schema import Graph, DerivedFrom, Model
+from mergeui.web.schema import LabelFieldType, ColorFieldType
 
 
 # ##### Helpers #####
@@ -443,7 +444,7 @@ def get_node_styles(
 
 
 class GraphPlotBuilder:
-    settings: core.settings.Settings
+    settings: Settings
     # in
     graph: Graph
     selected_id: t.Optional[str]

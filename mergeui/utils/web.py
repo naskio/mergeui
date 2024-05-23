@@ -1,9 +1,10 @@
 import typing as t
 import fastapi as fa
 import pydantic as pd
-from utils import pretty_format_dt, pretty_format_int, pretty_format_float, pretty_format_description, is_valid_repo_id
-from core.schema import Model, Graph, BaseValidationError
-from web.schema import DataFrameDataType, DisplayColumnType, PartialModel, DataGraph
+from mergeui.utils import pretty_format_dt, pretty_format_int, pretty_format_float, pretty_format_description, \
+    is_valid_repo_id
+from mergeui.core.schema import Model, Graph, BaseValidationError
+from mergeui.web.schema import DataFrameDataType, DisplayColumnType, PartialModel, DataGraph
 
 
 def pretty_error(error: t.Union[BaseValidationError, str]) -> str:

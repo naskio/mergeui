@@ -4,8 +4,8 @@ import dataclasses as dc
 import pydantic
 import datetime as dt
 import gqlalchemy as gq
-from utils import titlify
-from utils.types import get_fields_from_class, create_literal_type
+from mergeui.utils import titlify
+from mergeui.utils.types import get_fields_from_class, create_literal_type
 
 
 @dc.dataclass

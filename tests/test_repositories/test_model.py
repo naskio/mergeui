@@ -1,4 +1,4 @@
-from core.schema import Model
+from mergeui.core.schema import Model
 
 
 def test_list_models(model_repository):

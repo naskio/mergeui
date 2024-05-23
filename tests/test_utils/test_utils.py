@@ -1,8 +1,8 @@
 import pytest
 import datetime as dt
 from pathlib import Path
-from utils import parse_yaml, filter_none, pretty_format_int, naive_to_aware_dt, aware_to_naive_dt, pretty_format_dt, \
-    pretty_format_float, parse_iso_dt, iso_format_dt
+from mergeui.utils import parse_yaml, filter_none, pretty_format_int, naive_to_aware_dt, aware_to_naive_dt, \
+    pretty_format_dt, pretty_format_float, parse_iso_dt, iso_format_dt
 
 
 @pytest.fixture

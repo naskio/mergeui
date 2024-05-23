@@ -4,10 +4,10 @@ import gqlalchemy as gq
 from gqlalchemy.connection import _convert_memgraph_value
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy.query_builders.memgraph_query_builder import Order
-from core.db import DatabaseConnection, execute_query
-from core.base import BaseRepository
-from core.schema import Graph
-from utils import filter_none, escaped
+from mergeui.core.db import DatabaseConnection, execute_query
+from mergeui.core.base import BaseRepository
+from mergeui.core.schema import Graph
+from mergeui.utils import filter_none, escaped
 
 
 def _results_as_graph(results) -> Graph:

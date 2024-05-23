@@ -1,7 +1,7 @@
 import uvicorn
 import fastapi as fa
-from core.dependencies import get_settings
-from web.api import router as api_router
+from mergeui.core.dependencies import get_settings
+from mergeui.web.api import router as api_router
 
 settings = get_settings()
 
@@ -20,9 +20,9 @@ async def favicon():
 
 if not settings.gradio_app_disabled:
     import gradio as gr
-    from web.gradio_app.main import demo
+    from mergeui.web.gradio_app.main import demo
 
-    app = gr.mount_gradio_app(app, demo, path="/", favicon_path=settings.favicon_path, show_error=True)
+    app = gr.mount_gradio_app(app, demo, path="/", favicon_path=str(settings.favicon_path), show_error=True)
 
 
 def start_server():

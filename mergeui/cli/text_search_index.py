@@ -1,4 +1,4 @@
-from core.dependencies import get_model_repository
+from mergeui.core.dependencies import get_model_repository
 
 
 def main(force: bool = True):

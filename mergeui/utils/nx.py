@@ -4,7 +4,7 @@ from pathlib import Path
 import networkx as nx
 from gqlalchemy.vendors.database_client import DatabaseClient
 from gqlalchemy.transformations.translators.nx_translator import NxTranslator
-from utils import log_progress
+from mergeui.utils import log_progress
 
 
 def preview_nx_graph(graph: nx.Graph) -> None:

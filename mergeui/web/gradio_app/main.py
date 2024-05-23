@@ -1,11 +1,11 @@
 import gradio as gr
-from web.gradio_app.theming import custom_theme
-from web.gradio_app.functions import get_model_lineage, list_models
-from core.dependencies import get_settings, get_model_service
-from core.schema import SortByOptionType, ExcludeOptionType, DisplayColumnType
-from web.schema import LabelFieldType, ColorFieldType, GetModelLineageInputDTO
-from utils.types import get_literal_type_options
-from utils.web import list_as_choices
+from mergeui.web.gradio_app.theming import custom_theme
+from mergeui.web.gradio_app.functions import get_model_lineage, list_models
+from mergeui.core.dependencies import get_settings, get_model_service
+from mergeui.core.schema import SortByOptionType, ExcludeOptionType, DisplayColumnType
+from mergeui.web.schema import LabelFieldType, ColorFieldType, GetModelLineageInputDTO
+from mergeui.utils.types import get_literal_type_options
+from mergeui.utils.web import list_as_choices
 
 if gr.NO_RELOAD:
     settings = get_settings()

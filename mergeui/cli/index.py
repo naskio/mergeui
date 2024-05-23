@@ -8,10 +8,10 @@ import rq
 import huggingface_hub as hf
 from huggingface_hub import hf_api
 import gqlalchemy as gq
-from core.dependencies import get_settings, get_db_connection, get_graph_repository
-from utils import filter_none, custom_serializer, log_progress, format_duration
-from utils.index.data_extraction import list_model_infos, hf_whoami
-from utils.index.jobs import index_model_by_id, create_redis_connection
+from mergeui.core.dependencies import get_settings, get_db_connection, get_graph_repository
+from mergeui.utils import filter_none, custom_serializer, log_progress, format_duration
+from mergeui.utils.index.data_extraction import list_model_infos, hf_whoami
+from mergeui.utils.index.jobs import index_model_by_id, create_redis_connection
 
 
 def wait_for_jobs(jobs: list[rq.job.Job], q: rq.Queue, auto_reschedule: bool = True) -> None:

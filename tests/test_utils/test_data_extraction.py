@@ -1,7 +1,7 @@
 import pytest
 from huggingface_hub import hf_api
-from utils import parse_yaml, is_valid_repo_id
-from utils.index.data_extraction import get_data_origin, list_model_infos, get_model_info, \
+from mergeui.utils import parse_yaml, is_valid_repo_id
+from mergeui.utils.index.data_extraction import get_data_origin, list_model_infos, get_model_info, \
     download_file_from_hf, download_mergekit_config, download_readme, load_model_card, \
     extract_base_models_from_mergekit_config, extract_merge_method_from_mergekit_config, \
     extract_base_models_from_card_data, extract_license_from_card_data, extract_base_models_from_tags, \

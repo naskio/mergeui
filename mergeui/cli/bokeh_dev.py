@@ -1,10 +1,10 @@
 import random
 from bokeh.io import curdoc
-from core.settings import Settings
-from core.dependencies import get_settings, get_model_service
-from utils.graph_viz import GraphPlotBuilder
-from core.schema import Graph
-from web.schema import LabelFieldType, ColorFieldType
+from mergeui.core.settings import Settings
+from mergeui.core.dependencies import get_settings, get_model_service
+from mergeui.utils.graph_viz import GraphPlotBuilder
+from mergeui.core.schema import Graph
+from mergeui.web.schema import LabelFieldType, ColorFieldType
 
 settings: Settings = get_settings()
 model_service = get_model_service()

@@ -1,5 +1,5 @@
 from loguru import logger
-from core.dependencies import get_settings, get_db_connection
+from mergeui.core.dependencies import get_settings, get_db_connection
 
 
 def main():

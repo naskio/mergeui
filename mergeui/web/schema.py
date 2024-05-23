@@ -1,8 +1,8 @@
 import typing as t
 import pydantic as pd
-from core.schema import Model, ExcludeOptionType, SortByOptionType, DisplayColumnType
-from core.dependencies import get_settings
-from utils.types import create_partial_type_from_class
+from mergeui.core.schema import Model, ExcludeOptionType, SortByOptionType, DisplayColumnType
+from mergeui.core.dependencies import get_settings
+from mergeui.utils.types import create_partial_type_from_class
 
 settings = get_settings()
 

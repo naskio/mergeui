@@ -1,10 +1,10 @@
 import typing as t
 import fastapi as fa
-from core.dependencies import get_model_service
-from services import ModelService
-from core.schema import SortByOptionType, DisplayColumnType, ExcludeOptionType
-from web.schema import ListModelsInputDTO, GetModelLineageInputDTO, GenericRO, PartialModel, DataGraph
-from utils.web import api_error, models_as_partials, graph_as_data_graph
+from mergeui.core.dependencies import get_model_service
+from mergeui.services import ModelService
+from mergeui.core.schema import SortByOptionType, DisplayColumnType, ExcludeOptionType
+from mergeui.web.schema import ListModelsInputDTO, GetModelLineageInputDTO, GenericRO, PartialModel, DataGraph
+from mergeui.utils.web import api_error, models_as_partials, graph_as_data_graph
 
 router = fa.APIRouter()
 

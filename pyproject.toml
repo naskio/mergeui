@@ -1,15 +1,7 @@
 [tool.poetry]
 name = "mergeui"
-packages = [
-    { include = "cli", from = "mergeui" },
-    { include = "core", from = "mergeui" },
-    { include = "repositories", from = "mergeui" },
-    { include = "services", from = "mergeui" },
-    { include = "utils", from = "mergeui" },
-    { include = "web", from = "mergeui" },
-]
 version = "0.1.0"
-description = "UI for merged large language models"
+description = "All-in-one UI for merged LLMs in Hugging Face Hub"
 authors = ["Mehdi Nassim KHODJA <18899702+naskio@users.noreply.github.com>"]
 readme = "README.md"
 
