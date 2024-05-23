@@ -1,5 +1,27 @@
 ---
+title: MergeUI
+emoji: 🧬
+colorFrom: purple
+colorTo: rose
+sdk: gradio
+sdk_version: 4.31.5
+python_version: 3.9
+app_file: mergeui/web/gradio_app/main.py
+fullWidth: true
+startup_duration_timeout: 1h
 license: apache-2.0
+language:
+  - en
+datasets:
+  - open-llm-leaderboard/results
+tags:
+  - merge
+  - leaderboard
+  - mergekit
+  - lazymergekit
+short_description: All-in-one UI for merged LLMs in Hugging Face Hub
+thumbnail: https://raw.githubusercontent.com/naskio/mergeui/main/static/brand/banner.svg
+pinned: true
 ---
 
 [![MergeUI](./static/brand/banner.svg)](https://naskio-mergeui.hf.space)
