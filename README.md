@@ -9,7 +9,7 @@ python_version: 3.9
 app_file: mergeui/web/gradio_app/main.py
 fullWidth: true
 header: mini
-disable_embedding: true
+disable_embedding: false
 startup_duration_timeout: 15m
 license: apache-2.0
 language:
@@ -33,6 +33,10 @@ pinned: true
 provide a user-friendly interface for discovering and analyzing merged large language models (Merged LLMs) from
 the [Hugging Face Hub](https://huggingface.co/models?other=merge&sort=trending).
 It is particularly focused on models that have been merged using [MergeKit](https://github.com/arcee-ai/mergekit).
+
+- 🚀 **[Try it out](https://naskio-mergeui.hf.space)**
+- 👨‍💻 **[GitHub Repository](https://github.com/naskio/mergeui)**
+- 🤗 **[Hugging Face Space](https://huggingface.co/spaces/naskio/mergeui)**
 
 # Development
 
