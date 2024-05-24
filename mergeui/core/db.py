@@ -52,7 +52,7 @@ def auto_retry_query(*, max_tries: t.Optional[int] = 2, delay: t.Optional[float]
                     logger.debug(f"Checking auto retry query for {_e_str}")
                     if any(sub_str in _e_str for sub_str in
                            ["Cannot resolve conflicting transactions", "failed to receive chunk size",
-                            "GQLAlchemyWaitForConnectionError"]):
+                            "GQLAlchemyWaitForConnectionError", "failed to send chunk data"]):
                         _tries += 1
                         if _max_tries is None or _tries < _max_tries:
                             logger.warning(f"Retrying query execution. Try {_tries} of {_max_tries}...")
