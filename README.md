@@ -27,7 +27,7 @@ pinned: true
 ---
 
 [![MergeUI](./static/brand/banner.svg)](https://naskio-mergeui.hf.space)
-<h3 align="center">All-in-one UI for merged LLMs in Hugging Face Hub</h3>
+<h3 align="center">All-in-one UI for merged LLMs in Hugging Face</h3>
 
 [MergeUI](https://naskio-mergeui.hf.space) is an [open-source project](https://github.com/naskio/mergeui) that aims to
 provide a user-friendly interface for discovering and analyzing merged large language models (Merged LLMs) from
