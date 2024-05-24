@@ -387,7 +387,7 @@ with gr.Blocks(theme=custom_theme, title=settings.project_name, css=custom_css, 
                 """)
 
             with gr.Tab("❗ About"):
-                gr.Markdown((settings.project_dir / 'static/partials/about.md').read_text())
+                gr.Markdown((settings.project_dir / 'static/partials/about.md').read_text(), elem_classes='about')
 
         with gr.Column() as landing_page:
             gr.HTML((settings.project_dir / 'static/partials/hero.html').read_text())

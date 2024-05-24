@@ -2,3 +2,7 @@
 .sort-button {
     display: none !important;
 }
+
+.about {
+    padding: 1rem;
+}
