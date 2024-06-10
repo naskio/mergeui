@@ -1,9 +1,10 @@
-##### Sync to Hugging Face Hub #####
+####################################
+# This workflow will sync the repository to a Hugging Face Space
 # secrets:
-# - HF_TOKEN: Hugging Face API token
+# - HF_TOKEN: Hugging Face access token
 ####################################
 
-name: Sync to Hugging Face Hub
+name: Sync to Hugging Face
 on:
   push:
     branches: [ main ]
@@ -11,7 +12,7 @@ on:
   workflow_dispatch: # to run this workflow manually from the Actions tab
 
 jobs:
-  sync-to-hub:
+  sync_to_hf:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +25,7 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Setup Poetry
+      - name: Setup Poetry 1.8
         uses: abatilo/actions-poetry@v2
         with:
           poetry-version: '1.8'
@@ -41,9 +42,9 @@ jobs:
           git add requirements.txt packages.txt
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git commit -m "auto-setup HF Space (Gradio): requirements.txt, packages.txt"
+          git commit -m "auto-setup HF Gradio Space: requirements.txt, packages.txt"
 
-      - name: Push to Hugging Face
+      - name: Force push to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: git push https://naskio:$HF_TOKEN@huggingface.co/spaces/naskio/mergeui main --force
