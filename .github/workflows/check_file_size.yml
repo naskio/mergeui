@@ -1,3 +1,11 @@
+####################################
+# This workflow will check the file size does not exceed 10MB
+# secrets:
+# - GITHUB_TOKEN: GitHub API token with some extra permissions
+# (octokit.rest.issues.[addLabels|listLabelsOnIssue|removeLabel|getLabel|createLabel|createComment],
+# octokit.rest.pulls.listFiles, octokit.rest.git.getBlob, core.setFailed: set PR status to failed)
+####################################
+
 name: Check file size
 
 on:
@@ -19,4 +27,4 @@ jobs:
         uses: ppremk/lfs-warning@v3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }} # required with some permissions
-          filesizelimit: 10MB # this is 10MB so we can sync to HF Spaces
+          filesizelimit: 10MB # < 10MB so we can sync to HF Spaces
