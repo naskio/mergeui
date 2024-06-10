@@ -1,3 +1,8 @@
+##### Sync to Hugging Face Hub #####
+# secrets:
+# - HF_TOKEN: Hugging Face API token
+####################################
+
 name: Sync to Hugging Face Hub
 on:
   push:
@@ -9,11 +14,36 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
-      - name: Push to HF Hub
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Setup Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: '1.8'
+      - run: poetry --help
+
+      - name: Generate requirements.txt
+        run: poetry export --without-hashes --without dev -f requirements.txt -o requirements.txt
+
+      - name: Commit requirements.txt and packages.txt
+        run: |
+          touch packages.txt
+          echo "graphviz" >> packages.txt
+          echo "graphviz-dev" >> packages.txt
+          git add requirements.txt packages.txt
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git commit -m "auto-setup HF Space (Gradio): requirements.txt, packages.txt"
+
+      - name: Push to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: git push https://naskio:$HF_TOKEN@huggingface.co/spaces/naskio/mergeui main
