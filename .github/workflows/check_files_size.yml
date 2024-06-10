@@ -1,7 +1,13 @@
 name: Check file size
+
 on:
-  push: # run the action on every push on any branch
-  workflow_dispatch: # to run this workflow manually from the Actions tab
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # to run this workflow manually from the Actions tab
+
+permissions: # Sets permissions of the GITHUB_TOKEN to allow lfs warning to work properly
+  contents: read
+  pull-requests: write
 
 jobs:
   sync-to-hub:
@@ -10,5 +16,5 @@ jobs:
       - name: Check large files
         uses: ppremk/lfs-warning@v3.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Optional
+          token: ${{ secrets.GITHUB_TOKEN }} # required with some permissions
           filesizelimit: 10MB # this is 10MB so we can sync to HF Spaces
