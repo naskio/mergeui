@@ -23,6 +23,8 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Check large files
         uses: ppremk/lfs-warning@v3.2
         with:
