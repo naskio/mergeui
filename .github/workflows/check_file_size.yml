@@ -20,7 +20,7 @@ permissions: # Sets permissions of the GITHUB_TOKEN to allow lfs warning to work
   pull-requests: write
 
 jobs:
-  sync-to-hub:
+  check_file_size:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
