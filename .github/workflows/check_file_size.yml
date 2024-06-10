@@ -1,6 +1,8 @@
 name: Check file size
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:  # to run this workflow manually from the Actions tab
